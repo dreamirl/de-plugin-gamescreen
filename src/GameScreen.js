@@ -29,8 +29,9 @@ function GameScreen( name, params )
   this.camera = new ( Function.prototype.bind.apply( DE.Camera, [ DE.Camera ].concat( params.camera ) ) );
   this.camera.scene = this.scene;
 
-  if( params.gui )
+  if ( params.gui ) {
     this.gui = new DE.Gui( name + "-gui" );
+  }
 
   this.enable = true;
   /***
@@ -287,8 +288,9 @@ GameScreen.prototype.show = function( args, transition )
 
   this.scene.enable = true;
   this.camera.enable = true;
-  if ( this.gui )
+  if ( this.gui ) {
     this.gui.enable = true;
+  }
   this.enable = true;
 
   this.emit.apply( this, args && args.push ? [ "shown" ].concat( args ) : [ "shown", args ] );
@@ -314,8 +316,9 @@ GameScreen.prototype.hide = function( keepSceneActive, transition, silent )
     this.scene.enable = false;
   }
 
-  if( this.gui )
+  if ( this.gui ) {
     this.gui.enable = false;
+  }
   this.camera.enable = false;
   this.enable = false;
 
