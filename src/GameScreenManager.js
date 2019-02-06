@@ -84,6 +84,10 @@ GameScreensManager.prototype.add = function( screen )
   this.screens[ screen.name ] = screen;
   this.screens[ screen.name ].on( "changeScreen", this.changeScreen, this );
   this.render.add( screen.camera );
+  if ( screen.gui ) {
+    this.render.add( screen.gui );
+  }
+    
   screen.hide( undefined, undefined, true );
 };
 

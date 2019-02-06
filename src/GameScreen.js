@@ -29,6 +29,10 @@ function GameScreen( name, params )
   this.camera = new ( Function.prototype.bind.apply( DE.Camera, [ DE.Camera ].concat( params.camera ) ) );
   this.camera.scene = this.scene;
 
+  if ( params.gui ) {
+    this.gui = new DE.Gui( name + "-gui" );
+  }
+
   this.enable = true;
   /***
    * declare your buttons inside this namespace, it's used by gamepad navigation
@@ -281,9 +285,14 @@ GameScreen.prototype.show = function( args, transition )
 {
   DE.emit( "gamescreen-show", this.name, args );
   this.emit.apply( this, args && args.push ? [ "show" ].concat( args ) : [ "show", args ] );
+
   this.scene.enable = true;
   this.camera.enable = true;
+  if ( this.gui ) {
+    this.gui.enable = true;
+  }
   this.enable = true;
+
   this.emit.apply( this, args && args.push ? [ "shown" ].concat( args ) : [ "shown", args ] );
   DE.emit( "gamescreen-shown", this.name, args );
 };
@@ -299,15 +308,17 @@ GameScreen.prototype.hide = function( keepSceneActive, transition, silent )
     DE.emit( "gamescreen-hide", this.name );
     this.emit( "hide", this );
   }
-
-  if ( !keepSceneActive ) {
+  
+  if ( keepSceneActive ) {
+    this.scene.enable = true;
+  }
+  else {
     this.scene.enable = false;
   }
 
-  if ( this.keepSceneActive ) {
-    this.scene.enable = true;
+  if ( this.gui ) {
+    this.gui.enable = false;
   }
-
   this.camera.enable = false;
   this.enable = false;
 
