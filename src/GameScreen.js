@@ -46,7 +46,17 @@ function GameScreen(name, params) {
   // };
 
   this.currentButton = null;
+}
 
+GameScreen.prototype = Object.create(DE.Events.Emitter.prototype);
+GameScreen.prototype.constructor = GameScreen;
+
+GameScreen.prototype.trigger = GameScreen.prototype.emit;
+// DE.Event.addEventCapabilities( GameScreen );
+
+GameScreen.prototype.initialize = function() {};
+
+GameScreen.prototype.initializeGamepadControls = function( params ) {
   if (params.useGamepad || params.gamepad) {
     if (!params.gamepad) params.gamepad = {};
 
@@ -61,6 +71,9 @@ function GameScreen(name, params) {
     });
     this.cursorPosition = params.gamepad.cursorPosition || 'left';
     this.currsorOffset = params.gamepad.cursorOffset || { x: 0, y: 0 };
+
+    this.gamepadPosX = 0;
+    this.gamepadPosY = 0;
 
     /***
      * declare gamepad navigation as a 2D array push buttons or objects names
@@ -106,17 +119,11 @@ function GameScreen(name, params) {
       navDelayShort:
         params.gamepad.navDelayShort || params.gamepad.navdelayshort || 700,
     };
+    console.log("Gamepad Control Initialized", this.gamepadSettings)
   }
   // DE.Event.addEventComponents( this );
 }
 
-GameScreen.prototype = Object.create(DE.Events.Emitter.prototype);
-GameScreen.prototype.constructor = GameScreen;
-
-GameScreen.prototype.trigger = GameScreen.prototype.emit;
-// DE.Event.addEventCapabilities( GameScreen );
-
-GameScreen.prototype.initialize = function() {};
 /**
  * @public
  * enable gamepad navigation with a stick + a confirm button
@@ -128,23 +135,27 @@ GameScreen.prototype.enableGamepadNavigation = function(
   navigationArray,
   options,
 ) {
-  DE.Inputs.on('axeMoved', options.haxe || 'haxe', this._onGamepadHAxe, this);
-  DE.Inputs.on('axeMoved', options.vaxe || 'vaxe', this._onGamepadVAxe, this);
+  this.gamepadNavigation = navigationArray;
+  DE.Inputs.on('axeMoved', options.haxe || 'haxe',(val) => {this._onGamepadHAxe(val);}, this);
+  DE.Inputs.on('axeMoved', options.vaxe || 'vaxe', (val) => {this._onGamepadVAxe(val);}, this);
   DE.Inputs.on(
     'axeStop',
     options.haxe || 'haxe',
-    function() {
+    () => {
       this.__storedH = 0;
       this.__onGamepadHAxeCount = 0;
+      console.log("axe stopped haxe")
     },
     this,
   );
   DE.Inputs.on(
     'axeStop',
     options.vaxe || 'vaxe',
-    function() {
+    () => {
       this.__storedV = 0;
       this.__onGamepadVAxeCount = 0;
+      console.log("axe stopped vaxe")
+
     },
     this,
   );
@@ -152,9 +163,13 @@ GameScreen.prototype.enableGamepadNavigation = function(
   DE.Inputs.on(
     'keyUp',
     options.confirmInput || 'confirm',
-    this._cursorSelect,
+    () => {
+      console.log("confirm Input")
+      this._cursorSelect();
+    },
     this,
   );
+  console.log("Gamepad Control enabled", options)
 };
 
 /**
@@ -219,9 +234,11 @@ GameScreen.prototype.removeGamepadShortcuts = function(inputName) {
  * @memberOf GameScreen
  */
 GameScreen.prototype._updateCursorPos = function() {
-  this.currentCursorObject = this.objects[
+  console.log("_updateCursorPos: Y ",this.gamepadPosY,"--   X : ",this.gamepadPosX )
+  this.currentButton = this.scene.gameObjectsById[
     this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX]
   ];
+  console.log("_updateCursorPos -> this.currentButton", this.currentButton.id)
   this.cursor.focus(this.currentButton);
 
   // TODO add cursor offset here based on object collider size + cursor pos (top/bottom/left/right ?) + cursor offsets ?
@@ -236,14 +253,20 @@ GameScreen.prototype._updateCursorPos = function() {
 GameScreen.prototype.__onGamepadHAxeCount = 0;
 GameScreen.prototype.__storedH = 0;
 GameScreen.prototype._onGamepadHAxe = function(val) {
-  // if value is under minimum, ignore
+  // console.log("HAXE-1", val)
+  // console.log("HAXE-2", !this.enable)
+  // console.log("HAXE-3", (val !== undefined && val < this.gamepadSettings.minForceX))
+  // console.log( this.__storedH, "  --  ", this.gamepadSettings.minForceX, "--", val )
+  // console.log("HAXE-4", (this.__storedH > this.gamepadSettings.minForceX && val !== undefined))
+  // console.log("HAXE-5", (val === undefined && this.__storedH == 0 && this.__onGamepadHAxeCount > 0))
   if (
     !this.enable ||
-    (val !== undefined && val < this.gamepadSettings.minForceX) ||
+    // if value is under minimum, ignore
+    (val !== undefined && val < this.gamepadSettings.minForceX)
     // if gamepad is moved by user, but not a 0, ignore it because a setTimouet will be fired
-    (this.__storedH > this.gamepadSettings.minForceX && val !== undefined) ||
+    // (this.__storedH > this.gamepadSettings.minForceX && val !== undefined) ||
     // in case user stopped axes between setTimeout
-    (val === undefined && this.__storedH == 0 && this.__onGamepadHAxeCount > 0)
+    // (val === undefined && this.__storedH == 0 && this.__onGamepadHAxeCount > 0)
   )
     return;
   if (val) this.__storedH = val;
@@ -253,57 +276,56 @@ GameScreen.prototype._onGamepadHAxe = function(val) {
   if (this.gamepadPosX >= this.gamepadNavigation[this.gamepadPosY].length)
     this.gamepadPosX = 0;
   this._updateCursorPos();
-
   ++this.__onGamepadHAxeCount;
-  var self = this;
-  if (this.__onGamepadHAxeCount == 1)
-    setTimeout(function() {
-      self._onGamepadHAxe();
-    }, this.gamepadSettings.navDelayLong);
-  else
-    setTimeout(function() {
-      self._onGamepadHAxe();
-    }, this.gamepadSettings.navDelayShort);
+  // var self = this;
+  // if (this.__onGamepadHAxeCount == 1)
+  //   setTimeout(function() {
+  //     self._onGamepadHAxe();
+  //   }, this.gamepadSettings.navDelayLong);
+  // else
+  //   setTimeout(function() {
+  //     self._onGamepadHAxe();
+  //   }, this.gamepadSettings.navDelayShort);
 };
 GameScreen.prototype.__onGamepadVAxeCount = 0;
 GameScreen.prototype.__storedV = 0;
 GameScreen.prototype._onGamepadVAxe = function(val) {
-  // if value is under minimum, ignore
   if (
     !this.enable ||
-    (val !== undefined && val < this.gamepadSettings.minForceY) ||
+    // if value is under minimum, ignore
+    (val !== undefined && val < this.gamepadSettings.minForceY) 
     // if gamepad is moved by user, but not a 0, ignore it because a setTimouet will be fired
-    (this.__storedV > this.gamepadSettings.minForceY && val !== undefined) ||
+    // (this.__storedV > this.gamepadSettings.minForceY && val !== undefined) ||
     // in case user stopped axes between setTimeout
-    (val === undefined && this.__storedV == 0 && this.__onGamepadVAxeCount > 0)
+    // (val === undefined && this.__storedV == 0 && this.__onGamepadVAxeCount > 0)
   )
     return;
   if (val) this.__storedV = val;
 
-  this.gamepadPosX += this.__storedV > 0 ? 1 : -1;
+  this.gamepadPosY += this.__storedV > 0 ? 1 : -1;
 
   if (this.gamepadPosX >= this.gamepadNavigation[this.gamepadPosY].length)
-    this.gamepadPosX = 0;
-  if (this.gamepadNavigation[this.gamepadPosY].length <= this.gamepadPosX)
     this.gamepadPosX = this.gamepadNavigation[this.gamepadPosY].length - 1;
+  if (this.gamepadNavigation[this.gamepadPosY].length <= this.gamepadPosX)
+    this.gamepadPosX = 0;
 
   this._updateCursorPos();
 
   ++this.__onGamepadVAxeCount;
-  var self = this;
-  if (this.__onGamepadVAxeCount == 1)
-    setTimeout(function() {
-      self._onGamepadHAxe();
-    }, this.gamepadSettings.navDelayLong);
-  else
-    setTimeout(function() {
-      self._onGamepadHAxe();
-    }, this.gamepadSettings.navDelayShort);
+  // var self = this;
+  // if (this.__onGamepadVAxeCount == 1)
+  //   setTimeout(function() {
+  //     self._onGamepadHAxe();
+  //   }, this.gamepadSettings.navDelayLong);
+  // else
+  //   setTimeout(function() {
+  //     self._onGamepadHAxe();
+  //   }, this.gamepadSettings.navDelayShort);
 };
 GameScreen.prototype._cursorSelect = function() {
   if (!this.enable) return;
-
-  this.currentButton.pointerup({ x: 0, y: 0 }, {});
+  console.log("_cursorSelect", this.currentButton)
+  this.currentButton.onMouseClick();
 };
 
 /**
