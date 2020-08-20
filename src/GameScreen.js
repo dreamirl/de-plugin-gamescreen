@@ -63,14 +63,14 @@ GameScreen.prototype.initializeGamepadControls = function( params ) {
     /***
      * cursor is used for gamepad navigation
      */
-    this.cursor = params.selector || new DE.GameObject({
+    this.selectorFX = params.selectorFX;/* || new DE.GameObject({
       zindex: params.gamepad.zindex || 10,
       renderer: new DE.SpriteRenderer({
         spriteName: params.gamepad.cursorSpriteName || 'cursor',
       }),
-    });
-    this.cursorPosition = params.gamepad.cursorPosition || 'left';
-    this.currsorOffset = params.gamepad.cursorOffset || { x: 0, y: 0 };
+    });*/
+    // this.cursorPosition = params.gamepad.cursorPosition || 'left';
+    // this.currsorOffset = params.gamepad.cursorOffset || { x: 0, y: 0 };
 
     // to do, get the key and search the index automaticaly for the default button
     this.gamepadPosX = params.gamepad.defaultbutton.x || 0;
@@ -123,7 +123,6 @@ GameScreen.prototype.initializeGamepadControls = function( params ) {
     };
     
     console.log("Gamepad Control Initialized", this.gamepadSettings)
-    console.log(this.cursor)
   }
   // DE.Event.addEventComponents( this );
 }
@@ -239,17 +238,18 @@ GameScreen.prototype.removeGamepadShortcuts = function(inputName) {
 GameScreen.prototype._updateCursorPos = function() {
   // console.log("_updateCursorPos: Y ",this.gamepadPosY,"--   X : ",this.gamepadPosX )
   //remove selector from old button
-  // this.currentButton.remove(this.cursor);
+  if (this.currentButton)
+    this.currentButton.spriteRenderer.filters = [];
 
-  this.currentButton = this.scene.gameObjectsById[
-    this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX]
-  ];
+  this.currentButton = this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX];
 
-  console.log("_updateCursorPos -> this.currentButton", this.currentButton.id)
-  this.cursor.resetRenderer(this.currentButton.renderer);
-  this.currentButton.add(this.cursor);
-
-  this.cursor.focus(this.currentButton);
+  // console.log("_updateCursorPos -> this.currentButton", this.currentButton.id)
+  
+  this.currentButton.spriteRenderer.filters = [this.selectorFX];
+  
+  this.currentButton.spriteRenderer.filterArea = new DE.PIXI.Rectangle( 0, 0, this.scene.width, this.scene.height);
+  
+  console.log( this.currentButton, this.currentButton.filters)
 
   // TODO add cursor offset here based on object collider size + cursor pos (top/bottom/left/right ?) + cursor offsets ?
 };
