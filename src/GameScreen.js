@@ -60,6 +60,8 @@ GameScreen.prototype.initializeGamepadControls = function( params ) {
   if (params.useGamepad || params.gamepad) {
     if (!params.gamepad) params.gamepad = {};
 
+    console.log(params)
+
     /***
      * cursor is used for gamepad navigation
      */
@@ -73,8 +75,8 @@ GameScreen.prototype.initializeGamepadControls = function( params ) {
     // this.currsorOffset = params.gamepad.cursorOffset || { x: 0, y: 0 };
 
     // to do, get the key and search the index automaticaly for the default button
-    this.gamepadPosX = params.gamepad.defaultbutton.x || 0;
-    this.gamepadPosY = params.gamepad.defaultbutton.y || 0;
+    this.gamepadPosX = params.defaultbutton.x || params.gamepad.defaultbutton.x ||0;
+    this.gamepadPosY = params.defaultbutton.y || params.gamepad.defaultbutton.y ||0;
 
     // this._updateCursorPos();
     /***
@@ -107,9 +109,9 @@ GameScreen.prototype.initializeGamepadControls = function( params ) {
 
     // TODO inputs binding based on gamepadShortcuts (we should be able to change shortcuts after, add or remove ?)
     // TODO axe input for gamepad navigation
-    if (params.gamepad.navigation)
+    if (params.navigation)
       this.enableGamepadNavigation(
-        params.gamepad.navigation,
+        params.navigation,
         params.gamepad.navigationOpts,
       );
 
@@ -236,8 +238,7 @@ GameScreen.prototype.removeGamepadShortcuts = function(inputName) {
  * @memberOf GameScreen
  */
 GameScreen.prototype._updateCursorPos = function() {
-  // console.log("_updateCursorPos: Y ",this.gamepadPosY,"--   X : ",this.gamepadPosX )
-  //remove selector from old button
+
   if (this.currentButton)
     this.currentButton.spriteRenderer.filters = [];
 
@@ -249,8 +250,6 @@ GameScreen.prototype._updateCursorPos = function() {
   
   this.currentButton.spriteRenderer.filterArea = new DE.PIXI.Rectangle( 0, 0, this.scene.width, this.scene.height);
   
-  console.log( this.currentButton, this.currentButton.filters)
-
   // TODO add cursor offset here based on object collider size + cursor pos (top/bottom/left/right ?) + cursor offsets ?
 };
 
