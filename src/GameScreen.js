@@ -240,15 +240,17 @@ GameScreen.prototype.removeGamepadShortcuts = function(inputName) {
 GameScreen.prototype._updateCursorPos = function() {
 
   if (this.currentButton)
-    this.currentButton.spriteRenderer.filters = [];
+    this.currentButton.rnr.filters = [];
 
   this.currentButton = this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX];
+  
+  // console.log("GameScreen.prototype._updateCursorPos -> this.gamepadNavigation", this.gamepadNavigation)
 
-  // console.log("_updateCursorPos -> this.currentButton", this.currentButton.id)
+  // console.log("_updateCursorPos -> this.currentButton", this.currentButton)
   
-  this.currentButton.spriteRenderer.filters = [this.selectorFX];
+  this.currentButton.rnr.filters = [this.selectorFX];
   
-  this.currentButton.spriteRenderer.filterArea = new DE.PIXI.Rectangle( 0, 0, this.scene.width, this.scene.height);
+  this.currentButton.rnr.filterArea = new DE.PIXI.Rectangle( 0, 0, this.scene.width, this.scene.height);
   
   // TODO add cursor offset here based on object collider size + cursor pos (top/bottom/left/right ?) + cursor offsets ?
 };
@@ -356,7 +358,7 @@ GameScreen.prototype._onGamepadVAxe = function(val) {
 GameScreen.prototype._cursorSelect = function() {
   if (!this.enable) return;
   console.log("_cursorSelect", this.currentButton)
-  this.currentButton.onMouseClick();
+  this.currentButton.btn.onMouseClick();
 };
 
 /**
