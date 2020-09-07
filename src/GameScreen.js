@@ -60,8 +60,6 @@ GameScreen.prototype.initializeGamepadControls = function( params ) {
   if (params.useGamepad || params.gamepad) {
     if (!params.gamepad) params.gamepad = {};
 
-    console.log(params)
-
     /***
      * cursor is used for gamepad navigation
      */
@@ -124,7 +122,7 @@ GameScreen.prototype.initializeGamepadControls = function( params ) {
         params.gamepad.navDelayShort || params.gamepad.navdelayshort || 700,
     };
     
-    console.log("Gamepad Control Initialized", this.gamepadSettings)
+    // console.log("Gamepad Control Initialized", this.gamepadSettings)
   }
   // DE.Event.addEventComponents( this );
 }
@@ -173,7 +171,7 @@ GameScreen.prototype.enableGamepadNavigation = function(
     },
     this,
   );
-  console.log("Gamepad Control enabled", options)
+  // console.log("Gamepad Control enabled", options)
 };
 
 /**
@@ -237,16 +235,29 @@ GameScreen.prototype.removeGamepadShortcuts = function(inputName) {
  * you can call it directly if you are doing stuff on GameObjects and/or changing your gamepadNavigation
  * @memberOf GameScreen
  */
-GameScreen.prototype._updateCursorPos = function() {
+GameScreen.prototype._updateCursorPos = function(axisMove) {
 
-  if (this.currentButton)
+  
+  if( !this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX].btn.enable ){
+    console.log("bouton not enabled");
+    console.log(this.__storedH,this.__storedV, axisMove);
+    // return this._updateCursorsPos(axisMove)
+  }
+
+  if (this.currentButton){
     this.currentButton.rnr.filters = [];
-
+  }
+  
   this.currentButton = this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX];
   
+  if (this.currentButton.btn) {
+    this.currentButton.rnr = this.currentButton.btn.spriteRenderer;
+  } else if (this.currentButton.callB) {
+    this.currentButton.btn = this.currentButton.callB;
+  }
   // console.log("GameScreen.prototype._updateCursorPos -> this.gamepadNavigation", this.gamepadNavigation)
-
   // console.log("_updateCursorPos -> this.currentButton", this.currentButton)
+
   
   this.currentButton.rnr.filters = [this.selectorFX];
   
@@ -357,8 +368,15 @@ GameScreen.prototype._onGamepadVAxe = function(val) {
 };
 GameScreen.prototype._cursorSelect = function() {
   if (!this.enable) return;
-  console.log("_cursorSelect", this.currentButton)
-  this.currentButton.btn.onMouseClick();
+  if(this.currentButton.spriteRenderer)
+    console.log("_cursorSelect", this.currentButton.spriteRenderer.spriteName)
+
+  
+  var self = this ; 
+  setTimeout(function(){
+    console.log("click")
+    self.currentButton.btn.onMouseClick();
+  }, 200);
 };
 
 /**
