@@ -119,8 +119,6 @@ GameScreen.prototype.initializeGamepadControls = function(params) {
       navDelayShort:
         params.gamepad.navDelayShort || params.gamepad.navdelayshort || 700,
     };
-
-    console.log('Gamepad Control Initialized', this.gamepadSettings);
   }
   // DE.Event.addEventComponents( this );
 };
