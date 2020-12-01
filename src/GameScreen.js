@@ -243,11 +243,7 @@ GameScreen.prototype.removeGamepadShortcuts = function(inputName) {
  * you can call it directly if you are doing stuff on GameObjects and/or changing your gamepadNavigation
  * @memberOf GameScreen
  */
-GameScreen.prototype._updateCursorPos = function(axisMove, secondCall) {
-  // todo : upgrade cursor pathfind
-  // first check, haut, gauche, bas, droite
-  //if second call
-  //axis move ++ this.storedH/V ++
+GameScreen.prototype._updateCursorPos = function() {
   if (
     this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX] == '_' ||
     !this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX].btn.enable
@@ -292,33 +288,22 @@ GameScreen.prototype._updateCursorPos = function(axisMove, secondCall) {
 GameScreen.prototype.__onGamepadHAxeCount = 0;
 GameScreen.prototype.__storedH = 0;
 GameScreen.prototype._onGamepadHAxe = function(val) {
-  // console.log("HAXE-1", val)
-  // console.log("HAXE-2", !this.enable)
-  // console.log("HAXE-3.0", (val !== undefined && val < this.gamepadSettings.minForceX))
-  // console.log("HAXE-3.1", (val !== undefined && val * -1 < this.gamepadSettings.minForceX))
-  // console.log("HAXE-3.2", (val < this.gamepadSettings.minForceX || val * -1 < this.gamepadSettings.minForceX ))
-  // console.log( this.__storedH, "  --  ", this.gamepadSettings.minForceX, "--", val )
-  // console.log("HAXE-4", (this.__storedH > this.gamepadSettings.minForceX && val !== undefined))
-  // console.log("HAXE-5", (val === undefined && this.__storedH == 0 && this.__onGamepadHAxeCount > 0))
   if (
     !this.enable ||
-    // if value is under minimum, ignore
-
     (val < this.gamepadSettings.minForceX &&
       val > -this.gamepadSettings.minForceX) ||
-    val == undefined
+    val == undefined ||
+    (this.lastInputHaxe && Date.now() - this.lastInputHaxe < 500)
   )
-    // if gamepad is moved by user, but not a 0, ignore it because a setTimouet will be fired
-    // (this.__storedH > this.gamepadSettings.minForceX && val !== undefined) ||
-    // in case user stopped axes between setTimeout
-    // (val === undefined && this.__storedH == 0 && this.__onGamepadHAxeCount > 0)
     return;
+
   if (this.activeScreen[0] != this.screen) {
     return console.log(this.activeScreen[0], this.screen);
   }
 
   if (val) this.__storedH = val;
 
+  this.lastInputHaxe = Date.now();
   this.gamepadPosX += this.__storedH > 0 ? 1 : -1;
 
   if (this.gamepadPosX >= this.gamepadNavigation[this.gamepadPosY].length)
@@ -343,14 +328,10 @@ GameScreen.prototype.__storedV = 0;
 GameScreen.prototype._onGamepadVAxe = function(val) {
   if (
     !this.enable ||
-    // if value is under minimum, ignore
     (val < this.gamepadSettings.minForceY &&
       val > -this.gamepadSettings.minForceY) ||
-    val == undefined
-    // if gamepad is moved by user, but not a 0, ignore it because a setTimouet will be fired
-    // (this.__storedV > this.gamepadSettings.minForceY && val !== undefined) ||
-    // in case user stopped axes between setTimeout
-    // (val === undefined && this.__storedV == 0 && this.__onGamepadVAxeCount > 0)
+    val == undefined ||
+    (this.lastInputVaxe && Date.now() - this.lastInputVaxe < 500)
   )
     return;
 
@@ -359,6 +340,8 @@ GameScreen.prototype._onGamepadVAxe = function(val) {
   }
 
   if (val) this.__storedV = val;
+
+  this.lastInputVaxe = Date.now();
 
   this.gamepadPosY += this.__storedV > 0 ? 1 : -1;
 
