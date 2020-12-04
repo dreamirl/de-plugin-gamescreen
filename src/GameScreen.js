@@ -174,7 +174,7 @@ GameScreen.prototype.enableGamepadNavigation = function(
     'keyUp',
     options.confirmInput || 'confirm',
     () => {
-      console.log('confirm Input');
+      // console.log('confirm Input');
       this._cursorSelect();
     },
     this,
@@ -248,7 +248,7 @@ GameScreen.prototype._updateCursorPos = function() {
     this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX] == '_' ||
     !this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX].btn.enable
   ) {
-    return console.log('bouton not enabled'); // this._updateCursorsPos(axisMove, true);
+    return console.warn('bouton not enabled'); // this._updateCursorsPos(axisMove, true);
   }
 
   if (this.currentButton) {
@@ -298,7 +298,7 @@ GameScreen.prototype._onGamepadHAxe = function(val) {
     return;
 
   if (this.activeScreen[0] != this.screen) {
-    return console.log(this.activeScreen[0], this.screen);
+    return;
   }
 
   if (val) this.__storedH = val;
@@ -336,7 +336,7 @@ GameScreen.prototype._onGamepadVAxe = function(val) {
     return;
 
   if (this.activeScreen[0] != this.screen) {
-    return console.log(this.activeScreen[0], this.screen);
+    return;
   }
 
   if (val) this.__storedV = val;
@@ -372,15 +372,13 @@ GameScreen.prototype._onGamepadVAxe = function(val) {
 GameScreen.prototype._cursorSelect = function() {
   if (!this.enable) return;
   if (this.currentButton.spriteRenderer)
-    console.log('_cursorSelect', this.currentButton.spriteRenderer.spriteName);
 
   if (this.activeScreen[0] != this.screen) {
-    return console.log(this.activeScreen[0], this.screen);
+    return;
   }
 
   var self = this;
   setTimeout(function() {
-    console.log('click');
     if (!self.currentButton.btn.onMouseClick)
       self.currentButton.btn.pointerdown();
     else self.currentButton.btn.onMouseClick();
