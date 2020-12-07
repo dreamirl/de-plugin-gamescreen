@@ -248,12 +248,12 @@ GameScreen.prototype._updateCursorPos = function(movedaxe) {
     this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX] == '_' ||
     !this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX].btn.enable
   ) {
-    console.log('EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE' + movedaxe);
-    console.log('EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE' + this.__storedH);
     if (movedaxe == 'haxe') {
-      this._onGamepadHAxe(this.__storedH);
+      this.lastInputHaxe = 0;
+      return this._onGamepadHAxe(this.__storedH);
     } else if (movedaxe == 'vaxe') {
-      this._onGamepadVAxe(this.__storedV);
+      this.lastInputVaxe = 0;
+      return this._onGamepadVAxe(this.__storedV);
     }
     //return console.warn('bouton not enabled'); // this._updateCursorsPos(axisMove, true);
   }
@@ -261,7 +261,6 @@ GameScreen.prototype._updateCursorPos = function(movedaxe) {
   if (this.currentButton) {
     this.currentButton.rnr.filters = [];
   }
-
   this.currentButton = this.gamepadNavigation[this.gamepadPosY][
     this.gamepadPosX
   ];
@@ -304,18 +303,13 @@ GameScreen.prototype._onGamepadHAxe = function(val) {
   )
     return;
 
-  console.log(
-    this.activeScreen,
-    '=====================================================================',
-  );
-
   if (this.activeScreen[0] != this.screen) {
     return;
   }
 
   if (val) this.__storedH = val;
 
-  this.lastInputHaxe = Date.now();
+  this.lastInputHaxe = Date.now(); // x ms
   this.gamepadPosX += this.__storedH > 0 ? 1 : -1;
 
   if (this.gamepadPosX >= this.gamepadNavigation[this.gamepadPosY].length)
@@ -383,14 +377,10 @@ GameScreen.prototype._onGamepadVAxe = function(val) {
 };
 GameScreen.prototype._cursorSelect = function() {
   if (!this.enable) return;
-  if (this.currentButton.spriteRenderer)
-    if (this.activeScreen[0] != this.screen) {
-      return;
-    }
-  console.log(
-    this.activeScreen,
-    '===========================CLICK==========================================',
-  );
+  if (this.activeScreen[0] != this.screen) {
+    return;
+  }
+
   var self = this;
   setTimeout(function() {
     if (!self.currentButton.btn.onMouseClick)
