@@ -243,12 +243,19 @@ GameScreen.prototype.removeGamepadShortcuts = function(inputName) {
  * you can call it directly if you are doing stuff on GameObjects and/or changing your gamepadNavigation
  * @memberOf GameScreen
  */
-GameScreen.prototype._updateCursorPos = function() {
+GameScreen.prototype._updateCursorPos = function(movedaxe) {
   if (
     this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX] == '_' ||
     !this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX].btn.enable
   ) {
-    return console.warn('bouton not enabled'); // this._updateCursorsPos(axisMove, true);
+    console.log('EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE' + movedaxe);
+    console.log('EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE' + this.__storedH);
+    if (movedaxe == 'haxe') {
+      this._onGamepadHAxe(this.__storedH);
+    } else if (movedaxe == 'vaxe') {
+      this._onGamepadVAxe(this.__storedV);
+    }
+    //return console.warn('bouton not enabled'); // this._updateCursorsPos(axisMove, true);
   }
 
   if (this.currentButton) {
@@ -296,6 +303,11 @@ GameScreen.prototype._onGamepadHAxe = function(val) {
     (this.lastInputHaxe && Date.now() - this.lastInputHaxe < 500)
   )
     return;
+
+  console.log(
+    this.activeScreen,
+    '=====================================================================',
+  );
 
   if (this.activeScreen[0] != this.screen) {
     return;
@@ -372,11 +384,13 @@ GameScreen.prototype._onGamepadVAxe = function(val) {
 GameScreen.prototype._cursorSelect = function() {
   if (!this.enable) return;
   if (this.currentButton.spriteRenderer)
-
-  if (this.activeScreen[0] != this.screen) {
-    return;
-  }
-
+    if (this.activeScreen[0] != this.screen) {
+      return;
+    }
+  console.log(
+    this.activeScreen,
+    '===========================CLICK==========================================',
+  );
   var self = this;
   setTimeout(function() {
     if (!self.currentButton.btn.onMouseClick)
