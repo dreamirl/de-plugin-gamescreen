@@ -9,7 +9,7 @@ import DE from '@dreamirl/dreamengine/src';
  * @constructor GameScreen
  * @class A plugin to create a complete GameScreen with a Camera and a Scene inside + useful middle-ware
  * It's compatible with the plugin GameScreensManager to handle easily multiple Game Screens
- * GameScreen can also handle for you Gamepad navigation though menus and/or objects in your scene, and add shortcuts binded on input
+ * GameScreen can also handle for you Gamepad and keyboard navigation though menus and/or objects in your scene, and add shortcuts binded on input
  * @param {String} name - The GameScreen name, useful only for debug and if you use the GameScreensManager
  * @param {Object} params - All parameters are optional
  * @author Inateno
@@ -35,7 +35,7 @@ function GameScreen(name, params) {
 
   this.enable = true;
   /***
-   * declare your buttons inside this namespace, it's used by gamepad navigation
+   * declare your buttons inside this namespace, it's used by menu navigation
    * it can be a GameObject or a button, but it must contain a "mouseUp" function as trigger
    */
   this.buttons = params.buttons || {};
@@ -46,6 +46,7 @@ function GameScreen(name, params) {
   // };
 
   this.currentButton = null;
+  this.currentTab = null;
 }
 
 GameScreen.prototype = Object.create(DE.Events.Emitter.prototype);
@@ -56,130 +57,228 @@ GameScreen.prototype.trigger = GameScreen.prototype.emit;
 
 GameScreen.prototype.initialize = function() {};
 
-GameScreen.prototype.initializeGamepadControls = function(params) {
-  if (params.useGamepad || params.gamepad) {
-    if (!params.gamepad) params.gamepad = {};
+GameScreen.prototype.initializeMenuControls = function(params) {
 
-    /***
-     * cursor is used for gamepad navigation
-     */
-    this.selectorFX = params.selectorFX;
+  const useGamepad = params.gamepad !== undefined;
+  const useKeyboard = params.useKeyboard ? params.useKeyboard : true;
 
-    this.screen = params.screen || '';
-    this.activeScreen = params.activeScreen || [];
+  if (!useGamepad && !useKeyboard) return;
 
-    // to do, get the key and search the index automaticaly for the default button
-    this.gamepadPosX =
-      params.defaultbutton.x || params.gamepad.defaultbutton.x || 0;
-    this.gamepadPosY =
-      params.defaultbutton.y || params.gamepad.defaultbutton.y || 0;
+  /***
+   * cursor is used for menu navigation
+   */
+  this.selectorFX = params.selectorFX;
 
-    // this._updateCursorPos();
-    /***
-     * declare gamepad navigation as a 2D array push buttons or objects names
-     */
-    this.gamepadNavigation = []; /*
-      [ "play", "previous", "next" ]
-      ,[ "lib", "previous", "next" ]
-      ,[ "options", "previous", "next" ]
-      ,[ "previous", "options", "next" ]
-    ];*/
+  this.screen = params.screen || '';
+  this.activeScreen = params.activeScreen || [];
 
-    /***
-     * declare gamepad shortcuts, when this input occurs it fire defined function previously declared in your screen
-     * if function doesn't exist, trigger an error
-     * use addGamepadShortcuts and removeGamepadShortcuts
-     */
-    this._gamepadShortcuts = {};
-    /*{
-      b: "back"
-      ,start: "play"
-      ,a: "select"
-      ,RT: "page,1"
-      ,LT: "page,-1"
-    };*/
+  // to do, get the key and search the index automaticaly for the default button
+  this.cursorPosX =
+    params.defaultButton.x || params.gamepad.defaultButton.x || 0;
+  this.cursorPosY =
+    params.defaultButton.y || params.gamepad.defaultButton.y || 0;
 
-    if (params.shortcuts)
-      for (var i in params.shortcuts)
-        this.addGamepadShortcuts(i, params.shortcuts[i]);
+  /***
+   * declare menu navigation as a 2D array push buttons or objects names
+   */
+  this.menuNavigation = []; /*
+    [ "play", "previous", "next" ]
+    ,[ "lib", "previous", "next" ]
+    ,[ "options", "previous", "next" ]
+    ,[ "previous", "options", "next" ]
+  ];*/
 
-    // TODO inputs binding based on gamepadShortcuts (we should be able to change shortcuts after, add or remove ?)
-    // TODO axe input for gamepad navigation
-    if (params.navigation)
-      this.enableGamepadNavigation(
-        params.navigation,
-        params.gamepad.navigationOpts,
-      );
+  /***
+   * declare menu shortcuts, when this input occurs it fire defined function previously declared in your screen
+   * use addShortcut and removeShortcut
+   */
+  this._shortcuts = {};
+  /*shortcuts: [
+    {
+      name: "exampleButton",
+      inputName: "back",
+      btn: this.btn,
+    },
+  ]*/
 
+  this.tabsNavigation = [];
+
+  if (useGamepad)
     this.gamepadSettings = {
       minForceX: params.gamepad.minForceX || params.gamepad.minforcex || 0.8,
       minForceY: params.gamepad.minForceY || params.gamepad.minforcey || 0.8,
-      navDelayLong:
-        params.gamepad.navDelayLong || params.gamepad.navdelaylong || 1000,
-      navDelayShort:
-        params.gamepad.navDelayShort || params.gamepad.navdelayshort || 700,
     };
-  }
+
+  this.menuSettings = {
+    navDelayLong:
+      params.navDelayLong || params.gamepad.navDelayLong || 1000,
+    navDelayShort:
+      params.navDelayShort || params.gamepad.navDelayShort || 700,
+  };
+
+  if (params.shortcuts)
+    for (var i in params.shortcuts)
+      this.addShortcut(params.shortcuts[i]);
+
+  if (params.menuNavigation)
+    this.enableMenuNavigation(
+      useGamepad,
+      useKeyboard,
+      params.menuNavigation,
+      params.gamepad.navigationOpts,
+      params.tabsNavigation,
+      this.cursorPosX,
+      this.cursorPosY,
+    );
+
+  this.hideOnMouseEvent = params.hideOnMouseEvent;
+
+  if (params.hideOnMouseEvent)
+    window.addEventListener('mousemove', () => {this._onMouseMove(this.currentButton)}, {once: true});
+
   // DE.Event.addEventComponents( this );
 };
 
 /**
  * @public
- * enable gamepad navigation with a stick + a confirm button
+ * enable gamepad and keyboard navigation with movements and shortcuts
  * @memberOf GameScreen
  * @param {Array} navigationArray a 2d array with objects name inside, these object should already exist in the screen
  * @param {Object} options configure inputs names, default is: "haxe", "vaxe", "confirm"
  */
-GameScreen.prototype.enableGamepadNavigation = function(
-  navigationArray,
-  options,
+GameScreen.prototype.enableMenuNavigation = function(
+  useGamepad,
+  useKeyboard,
+  menuNavigation,
+  gamepadOptions,
+  tabsNavigation,
+  defaultCursorPosX,
+  defaultCursorPosY,
 ) {
-  this.gamepadNavigation = navigationArray;
-  DE.Inputs.on(
-    'axeMoved',
-    options.haxe || 'haxe',
-    (val) => {
-      this._onGamepadHAxe(val);
-    },
-    this,
-  );
-  DE.Inputs.on(
-    'axeMoved',
-    options.vaxe || 'vaxe',
-    (val) => {
-      this._onGamepadVAxe(val);
-    },
-    this,
-  );
-  DE.Inputs.on(
-    'axeStop',
-    options.haxe || 'haxe',
-    () => {
-      this.__storedH = 0;
-      this.__onGamepadHAxeCount = 0;
-    },
-    this,
-  );
-  DE.Inputs.on(
-    'axeStop',
-    options.vaxe || 'vaxe',
-    () => {
-      this.__storedV = 0;
-      this.__onGamepadVAxeCount = 0;
-    },
-    this,
-  );
+  this.menuNavigation = menuNavigation;
+  this.tabsNavigation = tabsNavigation;
+
+  if (useGamepad) {
+    DE.Inputs.on(
+      'axeMoved',
+      gamepadOptions.haxe || 'haxe',
+      (val) => {
+        if (val > 0) this.currentAxeMoved = 'right';
+        else this.currentAxeMoved = 'left';
+        this._onGamepadHAxe(val, this.currentAxeMoved);
+      },
+      this,
+    );
+    DE.Inputs.on(
+      'axeMoved',
+      gamepadOptions.vaxe || 'vaxe',
+      (val) => {
+        if (val > 0) this.currentAxeMoved = 'up';
+        else this.currentAxeMoved = 'down';
+        this._onGamepadVAxe(val, this.currentAxeMoved);
+      },
+      this,
+    );
+    DE.Inputs.on(
+      'axeStop',
+      gamepadOptions.haxe || 'haxe',
+      () => {
+        this.__storedH = 0;
+        this.useNavShortDelay = false;
+        this.lastInputHaxe = 0;
+        this.currentAxeMoved = undefined;
+      },
+      this,
+    );
+    DE.Inputs.on(
+      'axeStop',
+      gamepadOptions.vaxe || 'vaxe',
+      () => {
+        this.__storedV = 0;
+        this.useNavShortDelay = false;
+        this.lastInputVaxe = 0;
+        this.currentAxeMoved = undefined;
+      },
+      this,
+    );
+  }
+
+  if (useKeyboard) {
+    DE.Inputs.on(
+      'keyDown',
+      'leftArrow',
+      () => {
+        this.currentKeyPressed = 'left';
+        this._onKeyPress(true, -1, 'left');
+      },
+      this,
+    );
+    DE.Inputs.on(
+      'keyDown',
+      'rightArrow',
+      () => {
+        this.currentKeyPressed = 'right';
+        this._onKeyPress(true, 1, 'right');
+      },
+      this,
+    );
+    DE.Inputs.on(
+      'keyDown',
+      'upArrow',
+      () => {
+        this.currentKeyPressed = 'up';
+        this._onKeyPress(false, -1, 'up');
+      },
+      this,
+    );
+    DE.Inputs.on(
+      'keyDown',
+      'downArrow',
+      () => {
+        this.currentKeyPressed = 'down';
+        this._onKeyPress(false, 1, 'down');
+      },
+      this,
+    );
+
+    DE.Inputs.on(
+      'keyUp',
+      'arrows',
+      () => {
+        this.currentKeyPressed = undefined;
+        this.useNavShortDelay = false;
+      },
+      this,
+    );
+  }
 
   DE.Inputs.on(
-    'keyUp',
-    options.confirmInput || 'confirm',
+    'keyDown',
+    gamepadOptions.confirmInput || 'confirm',
     () => {
-      // console.log('confirm Input');
       this._cursorSelect();
     },
     this,
   );
-  // console.log("Gamepad Control enabled", options)
+
+  if (this.tabsNavigation) {
+    DE.Inputs.on(
+      'keyDown',
+      gamepadOptions.rightTrigger || 'rightTrigger',
+      () => {
+        this._tabsNavigation(1, defaultCursorPosX, defaultCursorPosY);
+      },
+      this,
+    );
+    DE.Inputs.on(
+      'keyDown',
+      gamepadOptions.leftTrigger || 'leftTrigger',
+      () => {
+        this._tabsNavigation(-1, defaultCursorPosX, defaultCursorPosY);
+      },
+      this,
+    );
+  }
 };
 
 /**
@@ -214,39 +313,47 @@ GameScreen.prototype.addButtons = function(buttons) {
 
 /**
  * @public
- * add a shortcuts binding, you can only bind 1 button to call by inputName, you can do an invisible button with lot of logic inside the fired function
+ * add a shortcut binding
  * @memberOf GameScreen
- * @param {String} inputName input to listen
- * @param {String} btnName button to trigger when input occur
+ * @param {Object} shortcut an object with these properties :
+ * {String} name name to identify shortcut
+ * {String} inputName input to listen
+ * {GameObject} btn button to trigger when input occur
  */
-GameScreen.prototype.addGamepadShortcuts = function(inputName, btnName) {
-  // TODO add listener
-  this._gamepadShortcuts[inputName] = btnName;
-  // DE.GamePad.on
-  // _onGamepadHAxe
+GameScreen.prototype.addShortcut = function(shortcut) {
+  this._shortcuts[shortcut.name] = DE.Inputs.on(
+    'keyDown',
+    shortcut.inputName,
+    () => {
+      if (!this.enable) return
+      if (!shortcut.btn.onMouseClick)
+        shortcut.btn.pointerdown();
+      else shortcut.btn.onMouseClick();
+    },
+    this,
+  );
 };
 
 /**
  * @public
  * remove a shortcut binding
  * @memberOf GameScreen
- * @param {String} inputName input to remove
+ * @param {String} name shortcut to remove
  */
-GameScreen.prototype.removeGamepadShortcuts = function(inputName) {
-  // TODO remove listener
-  delete this._gamepadShortcuts[inputName];
+GameScreen.prototype.removeShortcut = function(name) {
+  delete this._shortcuts[name];
 };
 
 /**
  * @protected
- * related to gamepad navigation, fired when an axe event occur and update cursor position
- * you can call it directly if you are doing stuff on GameObjects and/or changing your gamepadNavigation
+ * related to menu navigation, update cursor position
+ * you can call it directly if you are doing stuff on GameObjects and/or changing your menuNavigation
  * @memberOf GameScreen
  */
 GameScreen.prototype._updateCursorPos = function(movedaxe) {
   if (
-    this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX] == '_' ||
-    !this.gamepadNavigation[this.gamepadPosY][this.gamepadPosX].btn.enable
+    this.menuNavigation[this.cursorPosY][this.cursorPosX] == '_' ||
+    !this.menuNavigation[this.cursorPosY][this.cursorPosX].btn.enable
   ) {
     if (movedaxe == 'haxe') {
       this.lastInputHaxe = 0;
@@ -261,8 +368,10 @@ GameScreen.prototype._updateCursorPos = function(movedaxe) {
   if (this.currentButton) {
     this.currentButton.rnr.filters = [];
   }
-  this.currentButton = this.gamepadNavigation[this.gamepadPosY][
-    this.gamepadPosX
+  
+  this.currentButton = this.menuNavigation[this.cursorPosY][
+    this.cursorPosX
+
   ];
 
   if (this.currentButton.btn && !this.currentButton.rnr) {
@@ -287,18 +396,95 @@ GameScreen.prototype._updateCursorPos = function(movedaxe) {
 
 /**
  * @protected
+ * related to menu navigation, fired when a mouse movement is detected
+ * you can call it directly to hide filters of the current button
+ * @memberOf GameScreen
+ */
+GameScreen.prototype._onMouseMove = function() {
+  if (this.currentButton) {
+    this.currentButton.rnr.filters = []
+  }
+};
+
+/**
+ * @protected
+ * related to tabs navigation
+ * you can call it directly to change tabs
+ * @memberOf GameScreen
+ * @param {Number} dir positive or negative number to change tab relative to current one
+ * @param {Number} buttonX new x position of the cursor after tab navigation
+ * @param {Number} buttonY new y position of the cursor after tab navigation
+ */
+GameScreen.prototype._tabsNavigation = function(dir, buttonX, buttonY) {
+  const currentTab = this.tabsNavigation.currentTab;
+  const currentIndex = this.tabsNavigation.tabs.indexOf(currentTab);
+  let newIndex = currentIndex + dir;
+
+  if (newIndex < 0) newIndex = 0;
+  if (newIndex >= this.tabsNavigation.tabs.length) newIndex = this.tabsNavigation.tabs.length - 1;
+  
+  this.tabsNavigation.navigateTo(this.tabsNavigation.tabs[newIndex]);
+  this.cursorPosX = buttonX;
+  this.cursorPosY = buttonY;
+  this._updateCursorPos();
+};
+
+/**
+ * @protected
+ * related to menu navigation fired when a key is pressed
+ * @param {Boolean} changePosX false if changing Y
+ * @param {Number} dir -1 or 1, the cursor movement
+ * @param {String} key key pressed, used for nav delay
+ * @memberOf GameScreen
+ */
+GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
+
+  if (!this.enable || 
+    this.currentKeyPressed !== key || 
+    this.activeScreen[0] != this.screen) return;
+
+  if (changePosX) {
+    this.cursorPosX += dir;
+    if (this.cursorPosX < 0) this.cursorPosX = 0;
+  } else {
+    this.cursorPosY += dir;
+    if (this.cursorPosY < 0) this.cursorPosY = 0;
+    if (this.cursorPosY >= this.menuNavigation.length)
+      this.cursorPosY = this.menuNavigation.length - 1;
+  }
+
+  if (this.cursorPosX >= this.menuNavigation[this.cursorPosY].length)
+    this.cursorPosX = this.menuNavigation[this.cursorPosY].length - 1;
+
+  this._updateCursorPos();
+
+  if (this.hideOnMouseEvent)
+    window.addEventListener('mousemove', () => {this._onMouseMove(this.currentButton)}, {once: true});
+
+  const delay = this.useNavShortDelay ? this.menuSettings.navDelayShort : this.menuSettings.navDelayLong
+
+  var self = this;
+  setTimeout(function() {
+    self._onKeyPress(changePosX, dir, key);
+  }, delay);
+  
+  this.useNavShortDelay = true;
+}
+
+/**
+ * @protected
  * related to gamepad navigation fired when an axe event occur
  * also onGamepadVAxe and cursorSelect exist too, and if you plan to overwrite one of these functions you should do it for all
  * @memberOf GameScreen
  */
-GameScreen.prototype.__onGamepadHAxeCount = 0;
 GameScreen.prototype.__storedH = 0;
-GameScreen.prototype._onGamepadHAxe = function(val) {
+GameScreen.prototype._onGamepadHAxe = function(val, axe) {
   if (
     !this.enable ||
     (val < this.gamepadSettings.minForceX &&
       val > -this.gamepadSettings.minForceX) ||
     val == undefined ||
+    this.currentAxeMoved !== axe || 
     (this.lastInputHaxe && Date.now() - this.lastInputHaxe < 500)
   )
     return;
@@ -309,34 +495,37 @@ GameScreen.prototype._onGamepadHAxe = function(val) {
 
   if (val) this.__storedH = val;
 
-  this.lastInputHaxe = Date.now(); // x ms
-  this.gamepadPosX += this.__storedH > 0 ? 1 : -1;
+  this.lastInputHaxe = Date.now();
+  this.cursorPosX += this.__storedH > 0 ? 1 : -1;
 
-  if (this.gamepadPosX >= this.gamepadNavigation[this.gamepadPosY].length)
-    this.gamepadPosX = this.gamepadNavigation[this.gamepadPosY].length - 1;
+  if (this.cursorPosX >= this.menuNavigation[this.cursorPosY].length)
+    this.cursorPosX = this.menuNavigation[this.cursorPosY].length - 1;
 
-  if (this.gamepadPosX < 0) this.gamepadPosX = 0;
+  if (this.cursorPosX < 0) this.cursorPosX = 0;
 
   this._updateCursorPos('haxe');
-  ++this.__onGamepadHAxeCount;
-  // var self = this;
-  // if (this.__onGamepadHAxeCount == 1)
-  //   setTimeout(function() {
-  //     self._onGamepadHAxe();
-  //   }, this.gamepadSettings.navDelayLong);
-  // else
-  //   setTimeout(function() {
-  //     self._onGamepadHAxe();
-  //   }, this.gamepadSettings.navDelayShort);
+
+  if (this.hideOnMouseEvent)
+    window.addEventListener('mousemove', () => {this._onMouseMove(this.currentButton)}, {once: true});
+
+  const delay = this.useNavShortDelay ? this.menuSettings.navDelayShort : this.menuSettings.navDelayLong
+
+  var self = this;
+  setTimeout(function() {
+    self._onGamepadHAxe(val, axe);
+  }, delay);
+
+  this.useNavShortDelay = true;
+
 };
-GameScreen.prototype.__onGamepadVAxeCount = 0;
 GameScreen.prototype.__storedV = 0;
-GameScreen.prototype._onGamepadVAxe = function(val) {
+GameScreen.prototype._onGamepadVAxe = function(val, axe) {
   if (
     !this.enable ||
     (val < this.gamepadSettings.minForceY &&
       val > -this.gamepadSettings.minForceY) ||
     val == undefined ||
+    this.currentAxeMoved !== axe || 
     (this.lastInputVaxe && Date.now() - this.lastInputVaxe < 500)
   )
     return;
@@ -349,44 +538,49 @@ GameScreen.prototype._onGamepadVAxe = function(val) {
 
   this.lastInputVaxe = Date.now();
 
-  this.gamepadPosY += this.__storedV > 0 ? 1 : -1;
+  this.cursorPosY += this.__storedV > 0 ? 1 : -1;
 
-  if (this.gamepadPosY < 0) this.gamepadPosY = 0;
+  if (this.cursorPosY < 0) this.cursorPosY = 0;
 
-  if (this.gamepadPosY >= this.gamepadNavigation.length)
-    this.gamepadPosY = this.gamepadNavigation.length - 1;
+  if (this.cursorPosY >= this.menuNavigation.length)
+    this.cursorPosY = this.menuNavigation.length - 1;
 
-  if (this.gamepadPosX >= this.gamepadNavigation[this.gamepadPosY].length)
-    this.gamepadPosX = this.gamepadNavigation[this.gamepadPosY].length - 1;
+  if (this.cursorPosX >= this.menuNavigation[this.cursorPosY].length)
+    this.cursorPosX = this.menuNavigation[this.cursorPosY].length - 1;
 
-  if (this.gamepadNavigation[this.gamepadPosY].length <= this.gamepadPosX)
-    this.gamepadPosX = 0;
+  if (this.menuNavigation[this.cursorPosY].length <= this.cursorPosX)
+    this.cursorPosX = 0;
 
-  this._updateCursorPos('vaxe');
+  this._updateCursorPos();
 
-  ++this.__onGamepadVAxeCount;
-  // var self = this;
-  // if (this.__onGamepadVAxeCount == 1)
-  //   setTimeout(function() {
-  //     self._onGamepadHAxe();
-  //   }, this.gamepadSettings.navDelayLong);
-  // else
-  //   setTimeout(function() {
-  //     self._onGamepadHAxe();
-  //   }, this.gamepadSettings.navDelayShort);
+  if (this.hideOnMouseEvent)
+    window.addEventListener('mousemove', () => {this._onMouseMove(this.currentButton)}, {once: true});
+
+  const delay = this.useNavShortDelay ? this.menuSettings.navDelayShort : this.menuSettings.navDelayLong
+
+  var self = this;
+  setTimeout(function() {
+    self._onGamepadVAxe(val, axe);
+  }, delay);
+  
+  this.useNavShortDelay = true;
 };
+
+/**
+ * @protected
+ * related to menu navigation fired when the confirm button is pressed
+ * click the current button using a key
+ * @memberOf GameScreen
+ */
 GameScreen.prototype._cursorSelect = function() {
   if (!this.enable) return;
   if (this.activeScreen[0] != this.screen) {
     return;
   }
 
-  var self = this;
-  setTimeout(function() {
-    if (!self.currentButton.btn.onMouseClick)
-      self.currentButton.btn.pointerdown();
-    else self.currentButton.btn.onMouseClick();
-  }, 200);
+  if (!this.currentButton.btn.onMouseClick)
+    this.currentButton.btn.pointerdown();
+  else this.currentButton.btn.onMouseClick();
 };
 
 /**
