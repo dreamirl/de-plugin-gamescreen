@@ -350,20 +350,28 @@ GameScreen.prototype.removeShortcut = function(name) {
  * you can call it directly if you are doing stuff on GameObjects and/or changing your menuNavigation
  * @memberOf GameScreen
  */
-GameScreen.prototype._updateCursorPos = function() {
+GameScreen.prototype._updateCursorPos = function(movedaxe) {
   if (
     this.menuNavigation[this.cursorPosY][this.cursorPosX] == '_' ||
     !this.menuNavigation[this.cursorPosY][this.cursorPosX].btn.enable
   ) {
-    return console.warn('bouton not enabled'); // this._updateCursorsPos(axisMove, true);
+    if (movedaxe == 'haxe') {
+      this.lastInputHaxe = 0;
+      return this._onGamepadHAxe(this.__storedH);
+    } else if (movedaxe == 'vaxe') {
+      this.lastInputVaxe = 0;
+      return this._onGamepadVAxe(this.__storedV);
+    }
+    //return console.warn('bouton not enabled'); // this._updateCursorsPos(axisMove, true);
   }
 
   if (this.currentButton) {
     this.currentButton.rnr.filters = [];
   }
-
+  
   this.currentButton = this.menuNavigation[this.cursorPosY][
     this.cursorPosX
+
   ];
 
   if (this.currentButton.btn && !this.currentButton.rnr) {
@@ -495,7 +503,7 @@ GameScreen.prototype._onGamepadHAxe = function(val, axe) {
 
   if (this.cursorPosX < 0) this.cursorPosX = 0;
 
-  this._updateCursorPos();
+  this._updateCursorPos('haxe');
 
   if (this.hideOnMouseEvent)
     window.addEventListener('mousemove', () => {this._onMouseMove(this.currentButton)}, {once: true});
@@ -508,6 +516,7 @@ GameScreen.prototype._onGamepadHAxe = function(val, axe) {
   }, delay);
 
   this.useNavShortDelay = true;
+
 };
 GameScreen.prototype.__storedV = 0;
 GameScreen.prototype._onGamepadVAxe = function(val, axe) {
@@ -565,8 +574,6 @@ GameScreen.prototype._onGamepadVAxe = function(val, axe) {
  */
 GameScreen.prototype._cursorSelect = function() {
   if (!this.enable) return;
-  if (this.currentButton.spriteRenderer)
-
   if (this.activeScreen[0] != this.screen) {
     return;
   }
