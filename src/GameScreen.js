@@ -551,7 +551,7 @@ GameScreen.prototype._onGamepadVAxe = function(val, axe) {
   if (this.menuNavigation[this.cursorPosY].length <= this.cursorPosX)
     this.cursorPosX = 0;
 
-  this._updateCursorPos();
+  this._updateCursorPos("vaxe");
 
   if (this.hideOnMouseEvent)
     window.addEventListener('mousemove', () => {this._onMouseMove(this.currentButton)}, {once: true});
