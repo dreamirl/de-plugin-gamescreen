@@ -101,8 +101,6 @@ GameScreen.prototype.initializeMenuControls = function(params) {
     },
   ]*/
 
-  this.tabsNavigation = [];
-
   if (useGamepad)
     this.gamepadSettings = {
       minForceX: params.gamepad.minForceX || params.gamepad.minforcex || 0.8,
@@ -127,6 +125,7 @@ GameScreen.prototype.initializeMenuControls = function(params) {
       params.menuNavigation,
       params.gamepad.navigationOpts,
       params.tabsNavigation,
+      params.subTabsNavigation,
       this.cursorPosX,
       this.cursorPosY,
     );
@@ -152,11 +151,13 @@ GameScreen.prototype.enableMenuNavigation = function(
   menuNavigation,
   gamepadOptions,
   tabsNavigation,
+  subTabsNavigation,
   defaultCursorPosX,
   defaultCursorPosY,
 ) {
   this.menuNavigation = menuNavigation;
   this.tabsNavigation = tabsNavigation;
+  this.subTabsNavigation = subTabsNavigation;
 
   if (useGamepad) {
     DE.Inputs.on(
@@ -164,7 +165,7 @@ GameScreen.prototype.enableMenuNavigation = function(
       gamepadOptions.haxe || 'haxe',
       (val) => {
         if (val > 0) this.currentAxeMoved = 'right';
-        else this.currentAxeMoved = 'left';
+        else if (val < 0) this.currentAxeMoved = 'left';
         this._onGamepadHAxe(val, this.currentAxeMoved);
       },
       this,
@@ -174,7 +175,7 @@ GameScreen.prototype.enableMenuNavigation = function(
       gamepadOptions.vaxe || 'vaxe',
       (val) => {
         if (val > 0) this.currentAxeMoved = 'up';
-        else this.currentAxeMoved = 'down';
+        else if (val < 0) this.currentAxeMoved = 'down';
         this._onGamepadVAxe(val, this.currentAxeMoved);
       },
       this,
@@ -266,7 +267,7 @@ GameScreen.prototype.enableMenuNavigation = function(
       'keyDown',
       gamepadOptions.rightTrigger || 'rightTrigger',
       () => {
-        this._tabsNavigation(1, defaultCursorPosX, defaultCursorPosY);
+        this._tabsNavigation(this.tabsNavigation, 1, defaultCursorPosX, defaultCursorPosY);
       },
       this,
     );
@@ -274,10 +275,29 @@ GameScreen.prototype.enableMenuNavigation = function(
       'keyDown',
       gamepadOptions.leftTrigger || 'leftTrigger',
       () => {
-        this._tabsNavigation(-1, defaultCursorPosX, defaultCursorPosY);
+        this._tabsNavigation(this.tabsNavigation, -1, defaultCursorPosX, defaultCursorPosY);
       },
       this,
     );
+
+    if (this.subTabsNavigation) {
+      DE.Inputs.on(
+        'keyDown',
+        gamepadOptions.rightBumper || 'rightBumper',
+        () => {
+          this._tabsNavigation(this.subTabsNavigation, 1, defaultCursorPosX, defaultCursorPosY);
+        },
+        this,
+      );
+      DE.Inputs.on(
+        'keyDown',
+        gamepadOptions.leftBumper || 'leftBumper',
+        () => {
+          this._tabsNavigation(this.subTabsNavigation, -1, defaultCursorPosX, defaultCursorPosY);
+        },
+        this,
+      );
+    }
   }
 };
 
@@ -325,7 +345,7 @@ GameScreen.prototype.addShortcut = function(shortcut) {
     'keyDown',
     shortcut.inputName,
     () => {
-      if (!this.enable) return
+      if (!this.enable || this.activeScreen[0] != this.screen) return
       if (!shortcut.btn.onMouseClick)
         shortcut.btn.pointerdown();
       else shortcut.btn.onMouseClick();
@@ -353,10 +373,14 @@ GameScreen.prototype.removeShortcut = function(name) {
 GameScreen.prototype._updateCursorPos = function() {
   if (
     this.menuNavigation[this.cursorPosY][this.cursorPosX] == '_' ||
+    this.menuNavigation[this.cursorPosY][this.cursorPosX] == '#' ||
     !this.menuNavigation[this.cursorPosY][this.cursorPosX].btn.enable
   ) {
     return console.warn('bouton not enabled'); // this._updateCursorsPos(axisMove, true);
   }
+
+  if (this.hideOnMouseEvent)
+    window.addEventListener('mousemove', () => {this._onMouseMove(this.currentButton)}, {once: true});
 
   if (this.currentButton) {
     this.currentButton.rnr.filters = [];
@@ -407,15 +431,18 @@ GameScreen.prototype._onMouseMove = function() {
  * @param {Number} buttonX new x position of the cursor after tab navigation
  * @param {Number} buttonY new y position of the cursor after tab navigation
  */
-GameScreen.prototype._tabsNavigation = function(dir, buttonX, buttonY) {
-  const currentTab = this.tabsNavigation.currentTab;
-  const currentIndex = this.tabsNavigation.tabs.indexOf(currentTab);
+GameScreen.prototype._tabsNavigation = function(tabsNavigation, dir, buttonX, buttonY) {
+  if (!tabsNavigation.tabs) return;
+  const currentTab = tabsNavigation.currentTab;
+  const currentIndex = tabsNavigation.tabs.indexOf(currentTab);
   let newIndex = currentIndex + dir;
 
   if (newIndex < 0) newIndex = 0;
-  if (newIndex >= this.tabsNavigation.tabs.length) newIndex = this.tabsNavigation.tabs.length - 1;
+  if (newIndex >= tabsNavigation.tabs.length) newIndex = tabsNavigation.tabs.length - 1;
+
+  if (newIndex === currentIndex) return;
   
-  this.tabsNavigation.navigateTo(this.tabsNavigation.tabs[newIndex]);
+  tabsNavigation.navigateTo(tabsNavigation.tabs[newIndex]);
   this.cursorPosX = buttonX;
   this.cursorPosY = buttonY;
   this._updateCursorPos();
@@ -430,28 +457,32 @@ GameScreen.prototype._tabsNavigation = function(dir, buttonX, buttonY) {
  * @memberOf GameScreen
  */
 GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
+  let tempCursorPosX = this.cursorPosX;
+  let tempCursorPosY = this.cursorPosY;
 
   if (!this.enable || 
     this.currentKeyPressed !== key || 
     this.activeScreen[0] != this.screen) return;
 
   if (changePosX) {
-    this.cursorPosX += dir;
-    if (this.cursorPosX < 0) this.cursorPosX = 0;
+    tempCursorPosX += dir;
+    if (tempCursorPosX < 0) tempCursorPosX = 0;
   } else {
-    this.cursorPosY += dir;
-    if (this.cursorPosY < 0) this.cursorPosY = 0;
-    if (this.cursorPosY >= this.menuNavigation.length)
-      this.cursorPosY = this.menuNavigation.length - 1;
+    tempCursorPosY += dir;
+    if (tempCursorPosY < 0) tempCursorPosY = 0;
+    if (tempCursorPosY >= this.menuNavigation.length)
+      tempCursorPosY = this.menuNavigation.length - 1;
   }
 
-  if (this.cursorPosX >= this.menuNavigation[this.cursorPosY].length)
-    this.cursorPosX = this.menuNavigation[this.cursorPosY].length - 1;
+  if (tempCursorPosX >= this.menuNavigation[tempCursorPosY].length)
+    tempCursorPosX = this.menuNavigation[tempCursorPosY].length - 1;
+
+  if (this.menuNavigation[tempCursorPosY][tempCursorPosX] == '#') return;
+
+  this.cursorPosX = tempCursorPosX;
+  this.cursorPosY = tempCursorPosY;
 
   this._updateCursorPos();
-
-  if (this.hideOnMouseEvent)
-    window.addEventListener('mousemove', () => {this._onMouseMove(this.currentButton)}, {once: true});
 
   const delay = this.useNavShortDelay ? this.menuSettings.navDelayShort : this.menuSettings.navDelayLong
 
@@ -487,18 +518,21 @@ GameScreen.prototype._onGamepadHAxe = function(val, axe) {
 
   if (val) this.__storedH = val;
 
+  let tempCursorPosX = this.cursorPosX;
+
   this.lastInputHaxe = Date.now();
-  this.cursorPosX += this.__storedH > 0 ? 1 : -1;
+  tempCursorPosX += this.__storedH > 0 ? 1 : -1;
 
-  if (this.cursorPosX >= this.menuNavigation[this.cursorPosY].length)
-    this.cursorPosX = this.menuNavigation[this.cursorPosY].length - 1;
+  if (tempCursorPosX >= this.menuNavigation[this.cursorPosY].length)
+    tempCursorPosX = this.menuNavigation[this.cursorPosY].length - 1;
 
-  if (this.cursorPosX < 0) this.cursorPosX = 0;
+  if (tempCursorPosX < 0) tempCursorPosX = 0;
+
+  if (this.menuNavigation[this.cursorPosY][tempCursorPosX] == '#') return;
+
+  this.cursorPosX = tempCursorPosX;
 
   this._updateCursorPos();
-
-  if (this.hideOnMouseEvent)
-    window.addEventListener('mousemove', () => {this._onMouseMove(this.currentButton)}, {once: true});
 
   const delay = this.useNavShortDelay ? this.menuSettings.navDelayShort : this.menuSettings.navDelayLong
 
@@ -529,23 +563,28 @@ GameScreen.prototype._onGamepadVAxe = function(val, axe) {
 
   this.lastInputVaxe = Date.now();
 
-  this.cursorPosY += this.__storedV > 0 ? 1 : -1;
+  let tempCursorPosX = this.cursorPosX;
+  let tempCursorPosY = this.cursorPosY;
 
-  if (this.cursorPosY < 0) this.cursorPosY = 0;
+  tempCursorPosY += this.__storedV > 0 ? 1 : -1;
 
-  if (this.cursorPosY >= this.menuNavigation.length)
-    this.cursorPosY = this.menuNavigation.length - 1;
+  if (tempCursorPosY < 0) tempCursorPosY = 0;
 
-  if (this.cursorPosX >= this.menuNavigation[this.cursorPosY].length)
-    this.cursorPosX = this.menuNavigation[this.cursorPosY].length - 1;
+  if (tempCursorPosY >= this.menuNavigation.length)
+    tempCursorPosY = this.menuNavigation.length - 1;
 
-  if (this.menuNavigation[this.cursorPosY].length <= this.cursorPosX)
-    this.cursorPosX = 0;
+  if (tempCursorPosX >= this.menuNavigation[tempCursorPosY].length)
+    tempCursorPosX = this.menuNavigation[tempCursorPosY].length - 1;
+
+  if (this.menuNavigation[tempCursorPosY].length <= tempCursorPosX)
+    tempCursorPosX = 0;
+
+  if (this.menuNavigation[tempCursorPosY][tempCursorPosX] == '#') return;
+
+  this.cursorPosX = tempCursorPosX;
+  this.cursorPosY = tempCursorPosY;
 
   this._updateCursorPos();
-
-  if (this.hideOnMouseEvent)
-    window.addEventListener('mousemove', () => {this._onMouseMove(this.currentButton)}, {once: true});
 
   const delay = this.useNavShortDelay ? this.menuSettings.navDelayShort : this.menuSettings.navDelayLong
 
@@ -564,16 +603,15 @@ GameScreen.prototype._onGamepadVAxe = function(val, axe) {
  * @memberOf GameScreen
  */
 GameScreen.prototype._cursorSelect = function() {
-  if (!this.enable) return;
-  if (this.currentButton.spriteRenderer)
-
-  if (this.activeScreen[0] != this.screen) {
-    return;
-  }
+  if (
+    !this.enable || 
+    this.activeScreen[0] != this.screen || 
+    !this.currentButton
+  ) return;
 
   if (!this.currentButton.btn.onMouseClick)
     this.currentButton.btn.pointerdown();
-  else this.currentButton.btn.onMouseClick();
+  else this.currentButton.btn.customonMouseClick();
 };
 
 /**
