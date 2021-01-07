@@ -370,20 +370,13 @@ GameScreen.prototype.removeShortcut = function(name) {
  * you can call it directly if you are doing stuff on GameObjects and/or changing your menuNavigation
  * @memberOf GameScreen
  */
-GameScreen.prototype._updateCursorPos = function(movedaxe) {
+GameScreen.prototype._updateCursorPos = function() {
   if (
     this.menuNavigation[this.cursorPosY][this.cursorPosX] == '_' ||
     this.menuNavigation[this.cursorPosY][this.cursorPosX] == '#' ||
     !this.menuNavigation[this.cursorPosY][this.cursorPosX].btn.enable
   ) {
-    if (movedaxe == 'haxe') {
-      this.lastInputHaxe = 0;
-      return this._onGamepadHAxe(this.__storedH);
-    } else if (movedaxe == 'vaxe') {
-      this.lastInputVaxe = 0;
-      return this._onGamepadVAxe(this.__storedV);
-    }
-    //return console.warn('bouton not enabled'); // this._updateCursorsPos(axisMove, true);
+    return console.warn('bouton not enabled');
   }
 
   if (this.hideOnMouseEvent)
