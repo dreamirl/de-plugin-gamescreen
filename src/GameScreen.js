@@ -372,8 +372,6 @@ GameScreen.prototype.removeShortcut = function(name) {
  */
 GameScreen.prototype._updateCursorPos = function() {
   if (
-    this.menuNavigation[this.cursorPosY][this.cursorPosX] == '_' ||
-    this.menuNavigation[this.cursorPosY][this.cursorPosX] == '#' ||
     !this.menuNavigation[this.cursorPosY][this.cursorPosX].btn.enable
   ) {
     return console.warn('bouton not enabled');
@@ -425,6 +423,163 @@ GameScreen.prototype._onMouseMove = function() {
 
 /**
  * @protected
+ * calculate cursor position with pathfinding
+ * | is used as verticals channels
+ * - is used as horizontals channels
+ * |- is used as up left corner
+ * -| is used as up right corner
+ * |_ is used as down left corner
+ * _| is used as down right corner
+ * # is used as a block
+ * @memberOf GameScreen
+ * @param {Number} oldCursorPosX initial cursor x position
+ * @param {Number} oldCursorPosY initial cursor y position
+ * @param {Number} newCursorPosX new cursor x position
+ * @param {Number} newCursorPosY new cursor y position
+ */
+GameScreen.prototype.calculateCursorPos = function(oldCursorPosX, oldCursorPosY, newCursorPosX, newCursorPosY) {
+  let dir;
+  if (oldCursorPosX < newCursorPosX) dir = "right";
+  else if (oldCursorPosX > newCursorPosX) dir = "left";
+  else if (oldCursorPosY < newCursorPosY) dir = "down";
+  else if (oldCursorPosY > newCursorPosY) dir = "up";
+  else return [oldCursorPosX, oldCursorPosY];
+
+  if (!this.menuNavigation[newCursorPosY] || !this.menuNavigation[newCursorPosY][newCursorPosX])
+    return [oldCursorPosX, oldCursorPosY];
+
+  const newCursorPos = this.menuNavigation[newCursorPosY][newCursorPosX];
+
+  if (newCursorPos === "#") return [oldCursorPosX, oldCursorPosY];
+
+  let cursors = [{dir: dir, x: newCursorPosX, y: newCursorPosY}];
+
+  const self = this;
+  function navigate(cursorIndex) {
+    const cursor = cursors[cursorIndex]
+
+    if (!self.menuNavigation[cursor.y] || !self.menuNavigation[cursor.y][cursor.x]) {
+      cursors[cursorIndex] = undefined;
+      return;
+    } 
+
+    const cursorPos = self.menuNavigation[cursor.y][cursor.x];
+
+    if (cursorPos.btn && cursorPos.btn.enable) return cursorIndex;
+
+    switch (cursorPos) {
+      case "#":
+        cursors[cursorIndex] = undefined;
+        return;
+      case "-":
+        if (cursor.dir === "right") cursors[cursorIndex].x++;
+        else if (cursor.dir === "left") cursors[cursorIndex].x--;
+        else {
+          cursors.push({dir: "right", x: cursors[cursorIndex].x, y: cursors[cursorIndex].y});
+          cursors[cursorIndex].dir = "left";
+        }
+        break;
+      case "|":
+        if (cursor.dir === "down") cursors[cursorIndex].y++;
+        else if (cursor.dir === "up") cursors[cursorIndex].y--;
+        else {
+          cursors.push({dir: "down", x: cursors[cursorIndex].x, y: cursors[cursorIndex].y});
+          cursors[cursorIndex].dir = "up";
+        }
+        break;
+      case "|-":
+        switch (cursor.dir) {
+          case "up":
+            cursors[cursorIndex].dir = "right";
+            cursors[cursorIndex].x++;
+            break;
+          case "down":
+            cursors[cursorIndex].y++;
+            break;
+          case "left":
+            cursors[cursorIndex].dir = "down";
+          cursors[cursorIndex].y++;
+            break;
+          case "right":
+            cursors[cursorIndex].x++;
+            break;
+        }
+        break;
+      case "-|":
+        switch (cursor.dir) {
+          case "up":
+            cursors[cursorIndex].dir = "left";
+            cursors[cursorIndex].x--;
+            break;
+          case "down":
+            cursors[cursorIndex].y++;
+            break;
+          case "left":
+          cursors[cursorIndex].x--;
+            break;
+          case "right":
+            cursors[cursorIndex].dir = "down";
+            cursors[cursorIndex].y++;
+            break;
+        }
+        break;
+      case "|_":
+        switch (cursor.dir) {
+          case "up":
+            cursors[cursorIndex].y--;
+            break;
+          case "down":
+            cursors[cursorIndex].dir = "right";
+            cursors[cursorIndex].x++;
+            break;
+          case "left":
+            cursors[cursorIndex].dir = "up";
+          cursors[cursorIndex].y--;
+            break;
+          case "right":
+            cursors[cursorIndex].x++;
+            break;
+        }
+        break;
+      case "_|":
+        switch (cursor.dir) {
+          case "up":
+            cursors[cursorIndex].y--;
+            break;
+          case "down":
+            cursors[cursorIndex].dir = "left";
+            cursors[cursorIndex].x--;
+            break;
+          case "left":
+          cursors[cursorIndex].x--;
+            break;
+          case "right":
+            cursors[cursorIndex].dir = "up";
+            cursors[cursorIndex].y--;
+            break;
+        }
+        break;
+    }
+  }
+
+  while(cursors.length > 0) {
+    const nbCursors = cursors.length;
+    for (let i = 0; i < nbCursors; ++i) {
+      const result = navigate(i);
+      if (result >= 0) {
+        const cursor = cursors[result];
+        return [cursor.x, cursor.y];
+      }
+    }
+    
+    cursors = cursors.filter(Boolean);
+  }
+
+  return [undefined, undefined];
+};
+
+/**
+ * @protected
  * related to tabs navigation
  * you can call it directly to change tabs
  * @memberOf GameScreen
@@ -458,12 +613,14 @@ GameScreen.prototype._tabsNavigation = function(tabsNavigation, dir, buttonX, bu
  * @memberOf GameScreen
  */
 GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
-  let tempCursorPosX = this.cursorPosX;
-  let tempCursorPosY = this.cursorPosY;
-
   if (!this.enable || 
     this.currentKeyPressed !== key || 
     this.activeScreen[0] != this.screen) return;
+
+  let tempCursorPosX = this.cursorPosX;
+  let tempCursorPosY = this.cursorPosY;
+  let oldCursorPosX = this.cursorPosX;
+  let oldCursorPosY = this.cursorPosY;
 
   if (changePosX) {
     tempCursorPosX += dir;
@@ -478,11 +635,11 @@ GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
   if (tempCursorPosX >= this.menuNavigation[tempCursorPosY].length)
     tempCursorPosX = this.menuNavigation[tempCursorPosY].length - 1;
 
-  if (this.menuNavigation[tempCursorPosY][tempCursorPosX] == '#') return;
-
-  this.cursorPosX = tempCursorPosX;
-  this.cursorPosY = tempCursorPosY;
-
+  const [newCursorPosX, newCursorPosY] = this.calculateCursorPos(oldCursorPosX, oldCursorPosY, tempCursorPosX, tempCursorPosY);
+  if (newCursorPosX === undefined || newCursorPosY === undefined) return;
+  this.cursorPosX = newCursorPosX;
+  this.cursorPosY = newCursorPosY;
+  
   this._updateCursorPos();
 
   const delay = this.useNavShortDelay ? this.menuSettings.navDelayShort : this.menuSettings.navDelayLong
