@@ -693,7 +693,7 @@ GameScreen.prototype._tabsNavigation = function(
   buttonX,
   buttonY,
 ) {
-  if (!tabsNavigation.tabs) return;
+  if (this.activeScreen[0] != this.screen || !tabsNavigation.tabs) return;
   const currentTab = tabsNavigation.currentTab;
   const currentIndex = tabsNavigation.tabs.indexOf(currentTab);
   let newIndex = currentIndex + dir;
