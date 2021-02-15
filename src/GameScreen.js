@@ -77,6 +77,8 @@ GameScreen.prototype.initializeMenuControls = function(params) {
   this.cursorPosY =
     params.defaultButton.y || params.gamepad.defaultButton.y || 0;
 
+  this.onCursorUpdate = params.onCursorUpdate;
+
   /***
    * declare menu navigation as a 2D array push buttons or objects names
    */
@@ -424,6 +426,8 @@ GameScreen.prototype._updateCursorPos = function() {
     this.scene.height,
   );
 
+  if (this.onCursorUpdate) this.onCursorUpdate(this.currentButton);
+
   return this.currentButton;
 
   // TODO add cursor offset here based on object collider size + cursor pos (top/bottom/left/right ?) + cursor offsets ?
@@ -722,10 +726,7 @@ GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
   )
     return;
 
-  const [newCursorPosX, newCursorPosY] = this.calculateCursorPos(
-    changePosX,
-    dir,
-  );
+  const [newCursorPosX, newCursorPosY] = this.calculateCursorPos(changePosX, dir);
   if (newCursorPosX === undefined || newCursorPosY === undefined) return;
   this.cursorPosX = newCursorPosX;
   this.cursorPosY = newCursorPosY;
