@@ -452,6 +452,7 @@ GameScreen.prototype._onMouseMove = function() {
  * -| is used as up right corner
  * |_ is used as down left corner
  * _| is used as down right corner
+ * + is used as multi-directionnal channels
  * # is used as a block
  * @memberOf GameScreen
  * @param {Number} oldCursorPosX initial cursor x position
@@ -597,6 +598,45 @@ GameScreen.prototype.calculateCursorPos = function(
           case 'right':
             cursors[cursorIndex].dir = 'up';
             cursors[cursorIndex].y--;
+            break;
+        }
+        break;
+      case '+':
+        if (cursor.dir === 'up' || cursor.dir === 'down') {
+          cursors.push({
+            dir: 'left',
+            x: cursors[cursorIndex].x - 1,
+            y: cursors[cursorIndex].y,
+          });
+          cursors.push({
+            dir: 'right',
+            x: cursors[cursorIndex].x + 1,
+            y: cursors[cursorIndex].y,
+          });
+        } else {
+          cursors.push({
+            dir: 'up',
+            x: cursors[cursorIndex].x,
+            y: cursors[cursorIndex].y - 1,
+          });
+          cursors.push({
+            dir: 'down',
+            x: cursors[cursorIndex].x,
+            y: cursors[cursorIndex].y + 1,
+          });
+        }
+        switch (cursor.dir) {
+          case 'up':
+            cursors[cursorIndex].y--;
+            break;
+          case 'down':
+            cursors[cursorIndex].y++;
+            break;
+          case 'left':
+            cursors[cursorIndex].x++;
+            break;
+          case 'right':
+            cursors[cursorIndex].x--;
             break;
         }
         break;
