@@ -427,6 +427,8 @@ GameScreen.prototype._updateCursorPos = function() {
   );
 
   if (this.onCursorUpdate) this.onCursorUpdate(this.currentButton);
+  if (this.currentButton.scroll) 
+    this.currentButton.scroll.container.scrollTo(this.currentButton.scroll.x, this.currentButton.scroll.y);
 
   return this.currentButton;
 
