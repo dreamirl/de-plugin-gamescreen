@@ -78,6 +78,7 @@ GameScreen.prototype.initializeMenuControls = function(params) {
     params.defaultButton.y || params.gamepad.defaultButton.y || 0;
 
   this.onCursorUpdate = params.onCursorUpdate;
+  this.sceneScale = params.sceneScale || 1;
 
   /***
    * declare menu navigation as a 2D array push buttons or objects names
@@ -392,7 +393,8 @@ GameScreen.prototype.removeShortcut = function(name) {
  * @memberOf GameScreen
  */
 GameScreen.prototype._updateCursorPos = function() {
-  if (!this.menuNavigation[this.cursorPosY][this.cursorPosX].btn.enable) {
+  const btn = this.menuNavigation[this.cursorPosY][this.cursorPosX].btn;
+  if (!btn || !btn.enable) {
     return console.warn('bouton not enabled');
   }
 
@@ -422,8 +424,8 @@ GameScreen.prototype._updateCursorPos = function() {
   this.currentButton.rnr.filterArea = new DE.PIXI.Rectangle(
     0,
     0,
-    this.scene.width,
-    this.scene.height,
+    this.scene.width * this.sceneScale,
+    this.scene.height * this.sceneScale,
   );
 
   if (this.onCursorUpdate) this.onCursorUpdate(this.currentButton);
