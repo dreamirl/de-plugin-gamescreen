@@ -77,6 +77,9 @@ GameScreen.prototype.initializeMenuControls = function(params) {
   this.cursorPosY =
     params.defaultButton.y || params.gamepad.defaultButton.y || 0;
 
+  this.onCursorUpdate = params.onCursorUpdate;
+  this.sceneScale = params.sceneScale || 1;
+
   /***
    * declare menu navigation as a 2D array push buttons or objects names
    */
@@ -186,7 +189,6 @@ GameScreen.prototype.enableMenuNavigation = function(
       'axeStop',
       gamepadOptions.haxe || 'haxe',
       () => {
-        this.__storedH = 0;
         this.useNavShortDelay = false;
         this.lastInputHaxe = 0;
         this.currentAxeMoved = undefined;
@@ -197,7 +199,6 @@ GameScreen.prototype.enableMenuNavigation = function(
       'axeStop',
       gamepadOptions.vaxe || 'vaxe',
       () => {
-        this.__storedV = 0;
         this.useNavShortDelay = false;
         this.lastInputVaxe = 0;
         this.currentAxeMoved = undefined;
@@ -392,7 +393,8 @@ GameScreen.prototype.removeShortcut = function(name) {
  * @memberOf GameScreen
  */
 GameScreen.prototype._updateCursorPos = function() {
-  if (!this.menuNavigation[this.cursorPosY][this.cursorPosX].btn.enable) {
+  const btn = this.menuNavigation[this.cursorPosY][this.cursorPosX].btn;
+  if (!btn || !btn.enable) {
     return console.warn('bouton not enabled');
   }
 
@@ -422,9 +424,13 @@ GameScreen.prototype._updateCursorPos = function() {
   this.currentButton.rnr.filterArea = new DE.PIXI.Rectangle(
     0,
     0,
-    this.scene.width,
-    this.scene.height,
+    this.scene.width * this.sceneScale,
+    this.scene.height * this.sceneScale,
   );
+
+  if (this.onCursorUpdate) this.onCursorUpdate(this.currentButton);
+  if (this.currentButton.scroll) 
+    this.currentButton.scroll.container.scrollTo(this.currentButton.scroll.x, this.currentButton.scroll.y);
 
   return this.currentButton;
 
@@ -446,6 +452,7 @@ GameScreen.prototype._onMouseMove = function() {
 /**
  * @protected
  * calculate cursor position with pathfinding
+ * + is used as multi-directionnals channels
  * | is used as verticals channels
  * - is used as horizontals channels
  * |- is used as up left corner
@@ -454,35 +461,46 @@ GameScreen.prototype._onMouseMove = function() {
  * _| is used as down right corner
  * # is used as a block
  * @memberOf GameScreen
- * @param {Number} oldCursorPosX initial cursor x position
- * @param {Number} oldCursorPosY initial cursor y position
- * @param {Number} newCursorPosX new cursor x position
- * @param {Number} newCursorPosY new cursor y position
+ * @param {Boolean} changePosX false if changing Y
+ * @param {Number} cursorMovement -1 or 1, the cursor movement
  */
-GameScreen.prototype.calculateCursorPos = function(
-  oldCursorPosX,
-  oldCursorPosY,
-  newCursorPosX,
-  newCursorPosY,
-) {
+GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
+  let tempCursorPosX = this.cursorPosX;
+  let tempCursorPosY = this.cursorPosY;
+  let oldCursorPosX = this.cursorPosX;
+  let oldCursorPosY = this.cursorPosY;
+
+  if (changePosX) {
+    tempCursorPosX += cursorMovement;
+    if (tempCursorPosX < 0) tempCursorPosX = 0;
+  } else {
+    tempCursorPosY += cursorMovement;
+    if (tempCursorPosY < 0) tempCursorPosY = 0;
+    if (tempCursorPosY >= this.menuNavigation.length)
+      tempCursorPosY = this.menuNavigation.length - 1;
+  }
+
+  if (tempCursorPosX >= this.menuNavigation[tempCursorPosY].length)
+    tempCursorPosX = this.menuNavigation[tempCursorPosY].length - 1;
+
   let dir;
-  if (oldCursorPosX < newCursorPosX) dir = 'right';
-  else if (oldCursorPosX > newCursorPosX) dir = 'left';
-  else if (oldCursorPosY < newCursorPosY) dir = 'down';
-  else if (oldCursorPosY > newCursorPosY) dir = 'up';
+  if (oldCursorPosX < tempCursorPosX) dir = 'right';
+  else if (oldCursorPosX > tempCursorPosX) dir = 'left';
+  else if (oldCursorPosY < tempCursorPosY) dir = 'down';
+  else if (oldCursorPosY > tempCursorPosY) dir = 'up';
   else return [oldCursorPosX, oldCursorPosY];
 
   if (
-    !this.menuNavigation[newCursorPosY] ||
-    !this.menuNavigation[newCursorPosY][newCursorPosX]
+    !this.menuNavigation[tempCursorPosY] ||
+    !this.menuNavigation[tempCursorPosY][tempCursorPosX]
   )
     return [oldCursorPosX, oldCursorPosY];
 
-  const newCursorPos = this.menuNavigation[newCursorPosY][newCursorPosX];
+  const newCursorPos = this.menuNavigation[tempCursorPosY][tempCursorPosX];
 
   if (newCursorPos === '#') return [oldCursorPosX, oldCursorPosY];
 
-  let cursors = [{ dir: dir, x: newCursorPosX, y: newCursorPosY }];
+  let cursors = [{ dir: dir, x: tempCursorPosX, y: tempCursorPosY }];
 
   const self = this;
   function navigate(cursorIndex) {
@@ -490,7 +508,11 @@ GameScreen.prototype.calculateCursorPos = function(
 
     if (
       !self.menuNavigation[cursor.y] ||
-      !self.menuNavigation[cursor.y][cursor.x]
+      !self.menuNavigation[cursor.y][cursor.x] ||
+      (dir === 'right' && cursor.x < tempCursorPosX) ||
+      (dir === 'left' && cursor.x > tempCursorPosX) ||
+      (dir === 'down' && cursor.y < tempCursorPosY) ||
+      (dir === 'up' && cursor.y > tempCursorPosY)
     ) {
       cursors[cursorIndex] = undefined;
       return;
@@ -510,10 +532,11 @@ GameScreen.prototype.calculateCursorPos = function(
         else {
           cursors.push({
             dir: 'right',
-            x: cursors[cursorIndex].x,
+            x: cursors[cursorIndex].x + 1,
             y: cursors[cursorIndex].y,
           });
           cursors[cursorIndex].dir = 'left';
+          cursors[cursorIndex].x--;
         }
         break;
       case '|':
@@ -523,9 +546,10 @@ GameScreen.prototype.calculateCursorPos = function(
           cursors.push({
             dir: 'down',
             x: cursors[cursorIndex].x,
-            y: cursors[cursorIndex].y,
+            y: cursors[cursorIndex].y + 1,
           });
           cursors[cursorIndex].dir = 'up';
+          cursors[cursorIndex].y--;
         }
         break;
       case '|-':
@@ -600,6 +624,45 @@ GameScreen.prototype.calculateCursorPos = function(
             break;
         }
         break;
+      case '+':
+        if (cursor.dir === 'up' || cursor.dir === 'down') {
+          cursors.push({
+            dir: 'left',
+            x: cursors[cursorIndex].x - 1,
+            y: cursors[cursorIndex].y,
+          });
+          cursors.push({
+            dir: 'right',
+            x: cursors[cursorIndex].x + 1,
+            y: cursors[cursorIndex].y,
+          });
+        } else {
+          cursors.push({
+            dir: 'up',
+            x: cursors[cursorIndex].x,
+            y: cursors[cursorIndex].y - 1,
+          });
+          cursors.push({
+            dir: 'down',
+            x: cursors[cursorIndex].x,
+            y: cursors[cursorIndex].y + 1,
+          });
+        }
+        switch (cursor.dir) {
+          case 'up':
+            cursors[cursorIndex].y--;
+            break;
+          case 'down':
+            cursors[cursorIndex].y++;
+            break;
+          case 'left':
+            cursors[cursorIndex].x--;
+            break;
+          case 'right':
+            cursors[cursorIndex].x++;
+            break;
+        }
+        break;
     }
   }
 
@@ -634,7 +697,7 @@ GameScreen.prototype._tabsNavigation = function(
   buttonX,
   buttonY,
 ) {
-  if (!tabsNavigation.tabs) return;
+  if (this.activeScreen[0] != this.screen || !tabsNavigation.tabs) return;
   const currentTab = tabsNavigation.currentTab;
   const currentIndex = tabsNavigation.tabs.indexOf(currentTab);
   let newIndex = currentIndex + dir;
@@ -667,30 +730,7 @@ GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
   )
     return;
 
-  let tempCursorPosX = this.cursorPosX;
-  let tempCursorPosY = this.cursorPosY;
-  let oldCursorPosX = this.cursorPosX;
-  let oldCursorPosY = this.cursorPosY;
-
-  if (changePosX) {
-    tempCursorPosX += dir;
-    if (tempCursorPosX < 0) tempCursorPosX = 0;
-  } else {
-    tempCursorPosY += dir;
-    if (tempCursorPosY < 0) tempCursorPosY = 0;
-    if (tempCursorPosY >= this.menuNavigation.length)
-      tempCursorPosY = this.menuNavigation.length - 1;
-  }
-
-  if (tempCursorPosX >= this.menuNavigation[tempCursorPosY].length)
-    tempCursorPosX = this.menuNavigation[tempCursorPosY].length - 1;
-
-  const [newCursorPosX, newCursorPosY] = this.calculateCursorPos(
-    oldCursorPosX,
-    oldCursorPosY,
-    tempCursorPosX,
-    tempCursorPosY,
-  );
+  const [newCursorPosX, newCursorPosY] = this.calculateCursorPos(changePosX, dir);
   if (newCursorPosX === undefined || newCursorPosY === undefined) return;
   this.cursorPosX = newCursorPosX;
   this.cursorPosY = newCursorPosY;
@@ -715,7 +755,6 @@ GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
  * also onGamepadVAxe and cursorSelect exist too, and if you plan to overwrite one of these functions you should do it for all
  * @memberOf GameScreen
  */
-GameScreen.prototype.__storedH = 0;
 GameScreen.prototype._onGamepadHAxe = function(val, axe) {
   if (
     !this.enable ||
@@ -731,21 +770,13 @@ GameScreen.prototype._onGamepadHAxe = function(val, axe) {
     return;
   }
 
-  if (val) this.__storedH = val;
-
-  let tempCursorPosX = this.cursorPosX;
-
   this.lastInputHaxe = Date.now();
-  tempCursorPosX += this.__storedH > 0 ? 1 : -1;
 
-  if (tempCursorPosX >= this.menuNavigation[this.cursorPosY].length)
-    tempCursorPosX = this.menuNavigation[this.cursorPosY].length - 1;
-
-  if (tempCursorPosX < 0) tempCursorPosX = 0;
-
-  if (this.menuNavigation[this.cursorPosY][tempCursorPosX] == '#') return;
-
-  this.cursorPosX = tempCursorPosX;
+  const dir = val > 0 ? 1 : -1;
+  const [newCursorPosX, newCursorPosY] = this.calculateCursorPos(true, dir);
+  if (newCursorPosX === undefined || newCursorPosY === undefined) return;
+  this.cursorPosX = newCursorPosX;
+  this.cursorPosY = newCursorPosY;
 
   this._updateCursorPos();
 
@@ -760,7 +791,6 @@ GameScreen.prototype._onGamepadHAxe = function(val, axe) {
 
   this.useNavShortDelay = true;
 };
-GameScreen.prototype.__storedV = 0;
 GameScreen.prototype._onGamepadVAxe = function(val, axe) {
   if (
     !this.enable ||
@@ -776,30 +806,13 @@ GameScreen.prototype._onGamepadVAxe = function(val, axe) {
     return;
   }
 
-  if (val) this.__storedV = val;
-
   this.lastInputVaxe = Date.now();
 
-  let tempCursorPosX = this.cursorPosX;
-  let tempCursorPosY = this.cursorPosY;
-
-  tempCursorPosY += this.__storedV > 0 ? 1 : -1;
-
-  if (tempCursorPosY < 0) tempCursorPosY = 0;
-
-  if (tempCursorPosY >= this.menuNavigation.length)
-    tempCursorPosY = this.menuNavigation.length - 1;
-
-  if (tempCursorPosX >= this.menuNavigation[tempCursorPosY].length)
-    tempCursorPosX = this.menuNavigation[tempCursorPosY].length - 1;
-
-  if (this.menuNavigation[tempCursorPosY].length <= tempCursorPosX)
-    tempCursorPosX = 0;
-
-  if (this.menuNavigation[tempCursorPosY][tempCursorPosX] == '#') return;
-
-  this.cursorPosX = tempCursorPosX;
-  this.cursorPosY = tempCursorPosY;
+  const dir = val > 0 ? 1 : -1;
+  const [newCursorPosX, newCursorPosY] = this.calculateCursorPos(false, dir);
+  if (newCursorPosX === undefined || newCursorPosY === undefined) return;
+  this.cursorPosX = newCursorPosX;
+  this.cursorPosY = newCursorPosY;
 
   this._updateCursorPos();
 
