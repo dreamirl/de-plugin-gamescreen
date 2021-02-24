@@ -411,6 +411,7 @@ GameScreen.prototype._updateCursorPos = function() {
     this.currentButton.rnr.filters = [];
   }
 
+  this.oldButton = this.currentButton;
   this.currentButton = this.menuNavigation[this.cursorPosY][this.cursorPosX];
 
   if (this.currentButton.btn && !this.currentButton.rnr) {
@@ -428,9 +429,13 @@ GameScreen.prototype._updateCursorPos = function() {
     this.scene.height * this.sceneScale,
   );
 
-  if (this.onCursorUpdate) this.onCursorUpdate(this.currentButton);
-  if (this.currentButton.scroll) 
-    this.currentButton.scroll.container.scrollTo(this.currentButton.scroll.x, this.currentButton.scroll.y);
+  if (this.onCursorUpdate)
+    this.onCursorUpdate(this.currentButton, this.oldButton);
+  if (this.currentButton.scroll)
+    this.currentButton.scroll.container.scrollTo(
+      this.currentButton.scroll.x,
+      this.currentButton.scroll.y,
+    );
 
   return this.currentButton;
 
@@ -730,7 +735,10 @@ GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
   )
     return;
 
-  const [newCursorPosX, newCursorPosY] = this.calculateCursorPos(changePosX, dir);
+  const [newCursorPosX, newCursorPosY] = this.calculateCursorPos(
+    changePosX,
+    dir,
+  );
   if (newCursorPosX === undefined || newCursorPosY === undefined) return;
   this.cursorPosX = newCursorPosX;
   this.cursorPosY = newCursorPosY;
