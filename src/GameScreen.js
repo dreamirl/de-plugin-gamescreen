@@ -45,6 +45,7 @@ function GameScreen(name, params) {
   //   ,play: null
   // };
 
+  this.oldButton = null;
   this.currentButton = null;
   this.currentTab = null;
 }
@@ -59,14 +60,13 @@ GameScreen.prototype.initialize = function() {};
 
 GameScreen.prototype.initializeMenuControls = function(params) {
   const useGamepad = params.gamepad !== undefined;
-  const useKeyboard = params.useKeyboard ? params.useKeyboard : true;
+  const useKeyboard = params.useKeyboard ?? true;
 
   if (!useGamepad && !useKeyboard) return;
 
   /***
    * cursor is used for menu navigation
    */
-  this.selectorFX = params.selectorFX;
 
   this.screen = params.screen || '';
   this.activeScreen = params.activeScreen || [];
@@ -76,9 +76,6 @@ GameScreen.prototype.initializeMenuControls = function(params) {
     params.defaultButton.x || params.gamepad.defaultButton.x || 0;
   this.cursorPosY =
     params.defaultButton.y || params.gamepad.defaultButton.y || 0;
-
-  this.onCursorUpdate = params.onCursorUpdate;
-  this.sceneScale = params.sceneScale || 1;
 
   /***
    * declare menu navigation as a 2D array push buttons or objects names
@@ -129,16 +126,13 @@ GameScreen.prototype.initializeMenuControls = function(params) {
       this.cursorPosY,
     );
 
-  this.hideOnMouseEvent = params.hideOnMouseEvent;
-
-  if (params.hideOnMouseEvent)
-    window.addEventListener(
-      'mousemove',
-      () => {
-        this._onMouseMove(this.currentButton);
-      },
-      { once: true },
-    );
+  window.addEventListener(
+    'mousemove',
+    () => {
+      this._onMouseMove(this.currentButton);
+    },
+    { once: true },
+  );
 
   // DE.Event.addEventComponents( this );
 };
@@ -260,7 +254,19 @@ GameScreen.prototype.enableMenuNavigation = function(
     'keyDown',
     gamepadOptions.confirmInput || 'confirm',
     () => {
-      this._cursorSelect();
+      if (!this.currentButton) return;
+      this.currentButton.onMouseDown();
+    },
+    this,
+  );
+
+  DE.Inputs.on(
+    'keyUp',
+    gamepadOptions.confirmInput || 'confirm',
+    () => {
+      if (!this.currentButton) return;
+      this.currentButton.onMouseUp();
+      this.currentButton.onMouseClick();
     },
     this,
   );
@@ -364,16 +370,27 @@ GameScreen.prototype.addButtons = function(buttons) {
  * {GameObject} btn button to trigger when input occur
  */
 GameScreen.prototype.addShortcut = function(shortcut) {
-  this._shortcuts[shortcut.name] = DE.Inputs.on(
-    'keyDown',
-    shortcut.inputName,
-    () => {
-      if (!this.enable || this.activeScreen[0] != this.screen) return;
-      if (!shortcut.btn.onMouseClick) shortcut.btn.pointerdown();
-      else shortcut.btn.onMouseClick();
-    },
-    this,
-  );
+  this._shortcuts[shortcut.name] = {
+    keyDown: DE.Inputs.on(
+      'keyDown',
+      shortcut.inputName,
+      () => {
+        if (!this.enable || this.activeScreen[0] != this.screen) return;
+        shortcut.btn.onMouseDown();
+      },
+      this,
+    ),
+    keyUp: DE.Inputs.on(
+      'keyUp',
+      shortcut.inputName,
+      () => {
+        if (!this.enable || this.activeScreen[0] != this.screen) return;
+        shortcut.btn.onMouseUp();
+        shortcut.btn.onMouseClick();
+      },
+      this,
+    ),
+  };
 };
 
 /**
@@ -393,49 +410,30 @@ GameScreen.prototype.removeShortcut = function(name) {
  * @memberOf GameScreen
  */
 GameScreen.prototype._updateCursorPos = function() {
-  const btn = this.menuNavigation[this.cursorPosY][this.cursorPosX].btn;
+  const btn = this.menuNavigation[this.cursorPosY][this.cursorPosX];
   if (!btn || !btn.enable) {
     return console.warn('bouton not enabled');
   }
 
-  if (this.hideOnMouseEvent)
-    window.addEventListener(
-      'mousemove',
-      () => {
-        this._onMouseMove(this.currentButton);
-      },
-      { once: true },
-    );
-
-  if (this.currentButton) {
-    this.currentButton.rnr.filters = [];
-  }
+  window.addEventListener(
+    'mousemove',
+    () => {
+      this._onMouseMove(this.currentButton);
+    },
+    { once: true },
+  );
 
   this.oldButton = this.currentButton;
   this.currentButton = this.menuNavigation[this.cursorPosY][this.cursorPosX];
 
-  if (this.currentButton.btn && !this.currentButton.rnr) {
-    this.currentButton.rnr = this.currentButton.btn.spriteRenderer;
-  } else if (this.currentButton.callB) {
-    this.currentButton.btn = this.currentButton.callB;
-  }
-
-  this.currentButton.rnr.filters = [this.selectorFX];
-
-  this.currentButton.rnr.filterArea = new DE.PIXI.Rectangle(
-    0,
-    0,
-    this.scene.width * this.sceneScale,
-    this.scene.height * this.sceneScale,
-  );
-
-  if (this.onCursorUpdate)
-    this.onCursorUpdate(this.currentButton, this.oldButton);
   if (this.currentButton.scroll)
     this.currentButton.scroll.container.scrollTo(
       this.currentButton.scroll.x,
       this.currentButton.scroll.y,
     );
+
+  if (this.oldButton) this.oldButton.onMouseLeave();
+  this.currentButton.onMouseEnter();
 
   return this.currentButton;
 
@@ -445,12 +443,11 @@ GameScreen.prototype._updateCursorPos = function() {
 /**
  * @protected
  * related to menu navigation, fired when a mouse movement is detected
- * you can call it directly to hide filters of the current button
  * @memberOf GameScreen
  */
 GameScreen.prototype._onMouseMove = function() {
   if (this.currentButton) {
-    this.currentButton.rnr.filters = [];
+    this.currentButton.onMouseLeave();
   }
 };
 
@@ -525,7 +522,7 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
 
     const cursorPos = self.menuNavigation[cursor.y][cursor.x];
 
-    if (cursorPos.btn && cursorPos.btn.enable) return cursorIndex;
+    if (cursorPos && cursorPos.enable) return cursorIndex;
 
     switch (cursorPos) {
       case '#':
@@ -834,25 +831,6 @@ GameScreen.prototype._onGamepadVAxe = function(val, axe) {
   }, delay);
 
   this.useNavShortDelay = true;
-};
-
-/**
- * @protected
- * related to menu navigation fired when the confirm button is pressed
- * click the current button using a key
- * @memberOf GameScreen
- */
-GameScreen.prototype._cursorSelect = function() {
-  if (
-    !this.enable ||
-    this.activeScreen[0] != this.screen ||
-    !this.currentButton
-  )
-    return;
-
-  if (!this.currentButton.btn.onMouseClick)
-    this.currentButton.btn.pointerdown();
-  else this.currentButton.btn.customonMouseClick();
 };
 
 /**
