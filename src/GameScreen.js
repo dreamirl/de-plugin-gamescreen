@@ -492,6 +492,8 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
   else if (oldCursorPosY > tempCursorPosY) dir = 'up';
   else return [oldCursorPosX, oldCursorPosY];
 
+  const initDir = dir;
+
   if (
     !this.menuNavigation[tempCursorPosY] ||
     !this.menuNavigation[tempCursorPosY][tempCursorPosX]
@@ -507,18 +509,6 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
   const self = this;
   function navigate(cursorIndex) {
     const cursor = cursors[cursorIndex];
-
-    if (
-      !self.menuNavigation[cursor.y] ||
-      !self.menuNavigation[cursor.y][cursor.x] ||
-      (dir === 'right' && cursor.x < tempCursorPosX) ||
-      (dir === 'left' && cursor.x > tempCursorPosX) ||
-      (dir === 'down' && cursor.y < tempCursorPosY) ||
-      (dir === 'up' && cursor.y > tempCursorPosY)
-    ) {
-      cursors[cursorIndex] = undefined;
-      return;
-    }
 
     const cursorPos = self.menuNavigation[cursor.y][cursor.x];
 
@@ -665,6 +655,18 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
             break;
         }
         break;
+    }
+
+    if (
+      !self.menuNavigation[cursor.y] ||
+      !self.menuNavigation[cursor.y][cursor.x] ||
+      (initDir === 'right' && cursor.x <= oldCursorPosX) ||
+      (initDir === 'left' && cursor.x >= oldCursorPosX) ||
+      (initDir === 'down' && cursor.y <= oldCursorPosY) ||
+      (initDir === 'up' && cursor.y >= oldCursorPosY)
+    ) {
+      cursors[cursorIndex] = undefined;
+      return;
     }
   }
 
