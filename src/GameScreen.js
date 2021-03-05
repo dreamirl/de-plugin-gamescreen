@@ -484,14 +484,17 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
 
   const initDir = dir;
 
+  let cursorLooped = false;
   function loopCursor(cursorX, cursorY, menuNavigation) {
-    let cursorLooped = true;
+    let cursorMoved = true;
     if (cursorY < 0) cursorY = menuNavigation.length - 1;
     else if (cursorY > menuNavigation.length - 1) cursorY = 0;
     else if (cursorX < 0) cursorX = menuNavigation[0].length - 1;
     else if (cursorX > menuNavigation[0].length - 1) cursorX = 0;
-    else cursorLooped = false;
-    return [cursorX, cursorY, cursorLooped];
+    else cursorMoved = false;
+
+    if (cursorMoved) cursorLooped = true;
+    return [cursorX, cursorY];
   }
 
   [tempCursorPosX, tempCursorPosY] = loopCursor(
@@ -657,14 +660,9 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
         break;
     }
 
-    let cursorLooped = false;
-    [cursor.x, cursor.y, cursorLooped] = loopCursor(
-      cursor.x,
-      cursor.y,
-      self.menuNavigation,
-    );
+    [cursor.x, cursor.y] = loopCursor(cursor.x, cursor.y, self.menuNavigation);
 
-    if (cursorLooped) {
+    if (!cursorLooped) {
       if (
         (initDir === 'right' && cursor.x <= oldCursorPosX) ||
         (initDir === 'left' && cursor.x >= oldCursorPosX) ||
