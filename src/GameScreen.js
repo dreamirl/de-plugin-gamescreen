@@ -472,18 +472,8 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
   let oldCursorPosX = this.cursorPosX;
   let oldCursorPosY = this.cursorPosY;
 
-  if (changePosX) {
-    tempCursorPosX += cursorMovement;
-    if (tempCursorPosX < 0) tempCursorPosX = 0;
-  } else {
-    tempCursorPosY += cursorMovement;
-    if (tempCursorPosY < 0) tempCursorPosY = 0;
-    if (tempCursorPosY >= this.menuNavigation.length)
-      tempCursorPosY = this.menuNavigation.length - 1;
-  }
-
-  if (tempCursorPosX >= this.menuNavigation[tempCursorPosY].length)
-    tempCursorPosX = this.menuNavigation[tempCursorPosY].length - 1;
+  if (changePosX) tempCursorPosX += cursorMovement;
+  else tempCursorPosY += cursorMovement;
 
   let dir;
   if (oldCursorPosX < tempCursorPosX) dir = 'right';
@@ -494,11 +484,21 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
 
   const initDir = dir;
 
-  if (
-    !this.menuNavigation[tempCursorPosY] ||
-    !this.menuNavigation[tempCursorPosY][tempCursorPosX]
-  )
-    return [oldCursorPosX, oldCursorPosY];
+  function loopCursor(cursorX, cursorY, menuNavigation) {
+    let cursorLooped = true;
+    if (cursorY < 0) cursorY = menuNavigation.length - 1;
+    else if (cursorY > menuNavigation.length - 1) cursorY = 0;
+    else if (cursorX < 0) cursorX = menuNavigation[0].length - 1;
+    else if (cursorX > menuNavigation[0].length - 1) cursorX = 0;
+    else cursorLooped = false;
+    return [cursorX, cursorY, cursorLooped];
+  }
+
+  [tempCursorPosX, tempCursorPosY] = loopCursor(
+    tempCursorPosX,
+    tempCursorPosY,
+    this.menuNavigation,
+  );
 
   const newCursorPos = this.menuNavigation[tempCursorPosY][tempCursorPosX];
 
@@ -657,16 +657,23 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
         break;
     }
 
-    if (
-      !self.menuNavigation[cursor.y] ||
-      !self.menuNavigation[cursor.y][cursor.x] ||
-      (initDir === 'right' && cursor.x <= oldCursorPosX) ||
-      (initDir === 'left' && cursor.x >= oldCursorPosX) ||
-      (initDir === 'down' && cursor.y <= oldCursorPosY) ||
-      (initDir === 'up' && cursor.y >= oldCursorPosY)
-    ) {
-      cursors[cursorIndex] = undefined;
-      return;
+    let cursorLooped = false;
+    [cursor.x, cursor.y, cursorLooped] = loopCursor(
+      cursor.x,
+      cursor.y,
+      self.menuNavigation,
+    );
+
+    if (cursorLooped) {
+      if (
+        (initDir === 'right' && cursor.x <= oldCursorPosX) ||
+        (initDir === 'left' && cursor.x >= oldCursorPosX) ||
+        (initDir === 'down' && cursor.y <= oldCursorPosY) ||
+        (initDir === 'up' && cursor.y >= oldCursorPosY)
+      ) {
+        cursors[cursorIndex] = undefined;
+        return;
+      }
     }
   }
 
