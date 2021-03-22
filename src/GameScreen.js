@@ -254,7 +254,7 @@ GameScreen.prototype.enableMenuNavigation = function(
     'keyDown',
     gamepadOptions.confirmInput || 'confirm',
     () => {
-      if (!this.currentButton) return;
+      if (!this.currentButton || this.activeScreen[0] != this.screen) return;
       this.currentButton.onMouseDown();
     },
     this,
@@ -264,7 +264,7 @@ GameScreen.prototype.enableMenuNavigation = function(
     'keyUp',
     gamepadOptions.confirmInput || 'confirm',
     () => {
-      if (!this.currentButton) return;
+      if (!this.currentButton || this.activeScreen[0] != this.screen) return;
       this.currentButton.onMouseUp();
       this.currentButton.onMouseClick();
     },
@@ -387,6 +387,7 @@ GameScreen.prototype.addShortcut = function(shortcut) {
         if (!this.enable || this.activeScreen[0] != this.screen) return;
         shortcut.btn.onMouseUp();
         shortcut.btn.onMouseClick();
+        // TODO onMouseLeave if not currentButton after onMouseClick anim
       },
       this,
     ),
