@@ -433,8 +433,10 @@ GameScreen.prototype._updateCursorPos = function() {
       this.currentButton.scroll.y,
     );
 
-  if (this.oldButton) this.oldButton.onMouseLeave();
-  this.currentButton.onMouseEnter();
+  if (this.oldButton && this.oldButton.onMouseLeave)
+    this.oldButton.onMouseLeave();
+  if (this.currentButton && this.currentButton.onMouseEnter)
+    this.currentButton.onMouseEnter();
 
   return this.currentButton;
 
