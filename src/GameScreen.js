@@ -370,28 +370,55 @@ GameScreen.prototype.addButtons = function(buttons) {
  * {GameObject} btn button to trigger when input occur
  */
 GameScreen.prototype.addShortcut = function(shortcut) {
-  this._shortcuts[shortcut.name] = {
-    keyDown: DE.Inputs.on(
-      'keyDown',
-      shortcut.inputName,
-      () => {
-        if (!this.enable || this.activeScreen[0] != this.screen) return;
-        shortcut.btn.onMouseDown();
-      },
-      this,
-    ),
-    keyUp: DE.Inputs.on(
-      'keyUp',
-      shortcut.inputName,
-      () => {
-        if (!this.enable || this.activeScreen[0] != this.screen) return;
-        shortcut.btn.onMouseUp();
-        shortcut.btn.onMouseClick();
-        // TODO onMouseLeave if not currentButton after onMouseClick anim
-      },
-      this,
-    ),
-  };
+  if (shortcut.isAxe) {
+    this._shortcuts[shortcut.name] = {
+      axeMoved:
+        shortcut.btn.onAxeMove &&
+        DE.Inputs.on(
+          'axeMoved',
+          shortcut.inputName,
+          (val) => {
+            if (!this.enable || this.activeScreen[0] != this.screen) return;
+            shortcut.btn.onAxeMove(val);
+          },
+          this,
+        ),
+      axeStopped:
+        shortcut.btn.onAxeStop &&
+        DE.Inputs.on(
+          'axeStop',
+          shortcut.inputName,
+          () => {
+            if (!this.enable || this.activeScreen[0] != this.screen) return;
+            shortcut.btn.onAxeStop();
+          },
+          this,
+        ),
+    };
+  } else {
+    this._shortcuts[shortcut.name] = {
+      keyDown: DE.Inputs.on(
+        'keyDown',
+        shortcut.inputName,
+        () => {
+          if (!this.enable || this.activeScreen[0] != this.screen) return;
+          shortcut.btn.onMouseDown();
+        },
+        this,
+      ),
+      keyUp: DE.Inputs.on(
+        'keyUp',
+        shortcut.inputName,
+        () => {
+          if (!this.enable || this.activeScreen[0] != this.screen) return;
+          shortcut.btn.onMouseUp();
+          shortcut.btn.onMouseClick();
+          // TODO onMouseLeave if not currentButton after onMouseClick anim
+        },
+        this,
+      ),
+    };
+  }
 };
 
 /**
