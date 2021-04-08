@@ -439,7 +439,7 @@ GameScreen.prototype.removeShortcut = function(name) {
  */
 GameScreen.prototype._updateCursorPos = function() {
   const btn = this.menuNavigation[this.cursorPosY][this.cursorPosX];
-  if (!btn || !btn.enable) {
+  if (!btn || (!btn.enable && !btn.btn) || (btn.btn && !btn.btn.enable)) {
     return console.warn('bouton not enabled');
   }
 
@@ -452,7 +452,9 @@ GameScreen.prototype._updateCursorPos = function() {
   );
 
   this.oldButton = this.currentButton;
-  this.currentButton = this.menuNavigation[this.cursorPosY][this.cursorPosX];
+  this.currentButton =
+    this.menuNavigation[this.cursorPosY][this.cursorPosX].btn ||
+    this.menuNavigation[this.cursorPosY][this.cursorPosX];
 
   if (this.currentButton.scroll)
     this.currentButton.scroll.container.scrollTo(
@@ -546,7 +548,11 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
     [cursor.x, cursor.y] = loopCursor(cursor.x, cursor.y, self.menuNavigation);
     const cursorPos = self.menuNavigation[cursor.y][cursor.x];
 
-    if (cursorPos && cursorPos.enable) return cursorIndex;
+    if (
+      cursorPos &&
+      (cursorPos.enable || (cursorPos.btn && cursorPos.btn.enable))
+    )
+      return cursorIndex;
 
     switch (cursorPos) {
       case '#':
