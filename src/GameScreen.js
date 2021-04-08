@@ -543,6 +543,7 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
   function navigate(cursorIndex) {
     const cursor = cursors[cursorIndex];
 
+    [cursor.x, cursor.y] = loopCursor(cursor.x, cursor.y, self.menuNavigation);
     const cursorPos = self.menuNavigation[cursor.y][cursor.x];
 
     if (cursorPos && cursorPos.enable) return cursorIndex;
