@@ -59,8 +59,8 @@ GameScreen.prototype.trigger = GameScreen.prototype.emit;
 GameScreen.prototype.initialize = function() {};
 
 GameScreen.prototype.initializeMenuControls = function(params) {
-  const useGamepad = params.gamepad !== undefined;
-  const useKeyboard = params.useKeyboard ?? true;
+  const useGamepad = !!params.gamepad;
+  const useKeyboard = !!params.useKeyboard;
 
   if (!useGamepad && !useKeyboard) return;
 
