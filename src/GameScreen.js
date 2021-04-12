@@ -414,7 +414,8 @@ GameScreen.prototype.addShortcut = function(shortcut) {
           if (!this.enable || this.activeScreen[0] != this.screen) return;
           shortcut.btn.onMouseUp();
           shortcut.btn.onMouseClick();
-          // TODO onMouseLeave if not currentButton after onMouseClick anim
+          // TODO this need to be played after onMouseClick animation if it's not currentButton
+          setTimeout(() => shortcut.btn.onMouseLeave(), 100);
         },
         this,
       ),
@@ -747,7 +748,8 @@ GameScreen.prototype._tabsNavigation = function(
   if (tabsNavigation.ref) tabsNavigation = tabsNavigation.ref;
   if (this.activeScreen[0] != this.screen || !tabsNavigation.tabs) return;
   const currentTab = tabsNavigation.currentTab;
-  const currentIndex = tabsNavigation.tabs.indexOf(currentTab);
+  let currentIndex = tabsNavigation.tabs.indexOf(currentTab);
+  if (currentIndex === -1) currentIndex = 0;
   let newIndex = currentIndex + dir;
 
   if (newIndex < 0) newIndex = tabsNavigation.tabs.length - 1;
