@@ -60,7 +60,8 @@ GameScreen.prototype.initialize = function() {};
 
 GameScreen.prototype.initializeMenuControls = function(params) {
   const useGamepad = params.gamepad !== undefined;
-  const useKeyboard = params.useKeyboard === undefined ? true : params.useKeyboard;
+  const useKeyboard =
+    params.useKeyboard === undefined ? true : params.useKeyboard;
 
   if (!useGamepad && !useKeyboard) return;
 
@@ -743,14 +744,14 @@ GameScreen.prototype._tabsNavigation = function(
   buttonX,
   buttonY,
 ) {
+  if (tabsNavigation.ref) tabsNavigation = tabsNavigation.ref;
   if (this.activeScreen[0] != this.screen || !tabsNavigation.tabs) return;
   const currentTab = tabsNavigation.currentTab;
   const currentIndex = tabsNavigation.tabs.indexOf(currentTab);
   let newIndex = currentIndex + dir;
 
-  if (newIndex < 0) newIndex = 0;
-  if (newIndex >= tabsNavigation.tabs.length)
-    newIndex = tabsNavigation.tabs.length - 1;
+  if (newIndex < 0) newIndex = tabsNavigation.tabs.length - 1;
+  if (newIndex >= tabsNavigation.tabs.length) newIndex = 0;
 
   if (newIndex === currentIndex) return;
 
