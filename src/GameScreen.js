@@ -412,10 +412,11 @@ GameScreen.prototype.addShortcut = function(shortcut) {
         shortcut.inputName,
         () => {
           if (!this.enable || this.activeScreen[0] != this.screen) return;
-          shortcut.btn.onMouseUp();
-          shortcut.btn.onMouseClick();
+          const shortcutButton = shortcut.btn;
+          shortcutButton.onMouseUp();
+          shortcutButton.onMouseClick();
           // TODO this need to be played after onMouseClick animation if it's not currentButton
-          setTimeout(() => shortcut.btn.onMouseLeave(), 100);
+          setTimeout(() => shortcutButton.onMouseLeave(), 100);
         },
         this,
       ),
