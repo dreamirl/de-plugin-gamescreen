@@ -28,6 +28,7 @@ function GameScreen(name, params) {
     [DE.Camera].concat(params.camera),
   ))();
   this.camera.scene = this.scene;
+  this.persistent = params.persistent || false;
 
   if (params.gui) {
     this.gui = new DE.Gui(name + '-gui');

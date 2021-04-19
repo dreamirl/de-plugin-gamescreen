@@ -99,7 +99,7 @@ GameScreensManager.prototype.changeScreen = function(
   transition,
 ) {
   for (var i in this.screens) {
-    if (i == screenName) continue;
+    if (i == screenName || this.screens[i].persistent) continue;
     this.screens[i].hide(keepScenesActive, transition);
   }
 
