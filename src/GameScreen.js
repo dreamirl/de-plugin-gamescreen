@@ -380,7 +380,12 @@ GameScreen.prototype.addShortcut = function(shortcut) {
           'axeMoved',
           shortcut.inputName,
           (val) => {
-            if (!this.enable || this.activeScreen[0] != this.screen) return;
+            if (
+              !this.enable ||
+              this.activeScreen[0] != this.screen ||
+              this.disableShortcuts
+            )
+              return;
             shortcut.btn.onAxeMove(val);
           },
           this,
@@ -391,7 +396,12 @@ GameScreen.prototype.addShortcut = function(shortcut) {
           'axeStop',
           shortcut.inputName,
           () => {
-            if (!this.enable || this.activeScreen[0] != this.screen) return;
+            if (
+              !this.enable ||
+              this.activeScreen[0] != this.screen ||
+              this.disableShortcuts
+            )
+              return;
             shortcut.btn.onAxeStop();
           },
           this,
@@ -403,7 +413,12 @@ GameScreen.prototype.addShortcut = function(shortcut) {
         'keyDown',
         shortcut.inputName,
         () => {
-          if (!this.enable || this.activeScreen[0] != this.screen) return;
+          if (
+            !this.enable ||
+            this.activeScreen[0] != this.screen ||
+            this.disableShortcuts
+          )
+            return;
           shortcut.btn.onMouseDown();
         },
         this,
@@ -412,7 +427,12 @@ GameScreen.prototype.addShortcut = function(shortcut) {
         'keyUp',
         shortcut.inputName,
         () => {
-          if (!this.enable || this.activeScreen[0] != this.screen) return;
+          if (
+            !this.enable ||
+            this.activeScreen[0] != this.screen ||
+            this.disableShortcuts
+          )
+            return;
           const shortcutButton = shortcut.btn;
           shortcutButton.onMouseUp();
           shortcutButton.onMouseClick();
