@@ -462,6 +462,8 @@ GameScreen.prototype.removeShortcut = function(name) {
  * @memberOf GameScreen
  */
 GameScreen.prototype._updateCursorPos = function() {
+  if (!this.menuNavigation[this.cursorPosY])
+    return console.warn('cursorPosY is out of the navigation map bounds');
   const btn = this.menuNavigation[this.cursorPosY][this.cursorPosX];
   if (!btn || (!btn.enable && !btn.btn) || (btn.btn && !btn.btn.enable)) {
     return console.warn('bouton not enabled');
