@@ -278,6 +278,7 @@ GameScreen.prototype.enableMenuNavigation = function(
       'keyDown',
       gamepadOptions.rightTrigger || 'rightTrigger',
       () => {
+        if (this.disableShortcuts) return;
         this._tabsNavigation(
           this.tabsNavigation,
           1,
@@ -291,6 +292,7 @@ GameScreen.prototype.enableMenuNavigation = function(
       'keyDown',
       gamepadOptions.leftTrigger || 'leftTrigger',
       () => {
+        if (this.disableShortcuts) return;
         this._tabsNavigation(
           this.tabsNavigation,
           -1,
@@ -306,6 +308,7 @@ GameScreen.prototype.enableMenuNavigation = function(
         'keyDown',
         gamepadOptions.rightBumper || 'rightBumper',
         () => {
+          if (this.disableShortcuts) return;
           this._tabsNavigation(
             this.subTabsNavigation,
             1,
@@ -319,6 +322,7 @@ GameScreen.prototype.enableMenuNavigation = function(
         'keyDown',
         gamepadOptions.leftBumper || 'leftBumper',
         () => {
+          if (this.disableShortcuts) return;
           this._tabsNavigation(
             this.subTabsNavigation,
             -1,
