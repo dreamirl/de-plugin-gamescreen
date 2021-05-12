@@ -508,7 +508,7 @@ GameScreen.prototype._updateCursorPos = function() {
  * @memberOf GameScreen
  */
 GameScreen.prototype._onMouseMove = function() {
-  if (this.currentButton) {
+  if (this.currentButton && this.currentButton.onMouseLeave) {
     this.currentButton.onMouseLeave();
   }
 };
