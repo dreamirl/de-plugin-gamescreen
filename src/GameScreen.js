@@ -49,6 +49,7 @@ function GameScreen(name, params) {
   this.oldButton = null;
   this.currentButton = null;
   this.currentTab = null;
+  this.lastDownButton = null;
 }
 
 GameScreen.prototype = Object.create(DE.Events.Emitter.prototype);
@@ -258,6 +259,7 @@ GameScreen.prototype.enableMenuNavigation = function(
     () => {
       if (!this.currentButton || this.activeScreen[0] != this.screen) return;
       this.currentButton.onMouseDown();
+      this.lastDownButton = this.currentButton;
     },
     this,
   );
@@ -266,7 +268,12 @@ GameScreen.prototype.enableMenuNavigation = function(
     'keyUp',
     gamepadOptions.confirmInput || 'confirm',
     () => {
-      if (!this.currentButton || this.activeScreen[0] != this.screen) return;
+      if (
+        !this.currentButton ||
+        this.activeScreen[0] != this.screen ||
+        this.lastDownButton !== this.currentButton
+      )
+        return;
       this.currentButton.onMouseUp();
       this.currentButton.onMouseClick();
     },
