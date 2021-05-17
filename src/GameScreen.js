@@ -742,8 +742,20 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
     }
   }
 
+  const maxSteps = this.menuNavigation.length * this.menuNavigation[0].length;
+  let step = 0;
   while (cursors.length > 0) {
+    if (step >= maxSteps) {
+      console.error(
+        'Menu navigation of',
+        this.screen,
+        'have an infinite loop',
+        this.menuNavigation,
+      );
+      return [undefined, undefined];
+    }
     const nbCursors = cursors.length;
+    step++;
     for (let i = 0; i < nbCursors; ++i) {
       const result = navigate(i);
       if (result >= 0) {
