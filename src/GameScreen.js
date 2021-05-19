@@ -48,7 +48,6 @@ function GameScreen(name, params) {
 
   this.oldButton = null;
   this.currentButton = null;
-  this.currentTab = null;
   this.lastDownButton = null;
   this.isGameWindowFocused = true;
 }
@@ -818,9 +817,7 @@ GameScreen.prototype._tabsNavigation = function(
     !tabsNavigation.tabs
   )
     return;
-  const currentTab = tabsNavigation.currentTab;
-  let currentIndex = tabsNavigation.tabs.indexOf(currentTab);
-  if (currentIndex === -1) currentIndex = 0;
+  const currentIndex = tabsNavigation.currentTabIndex;
   let newIndex = currentIndex + dir;
 
   if (newIndex < 0) newIndex = tabsNavigation.tabs.length - 1;
@@ -828,7 +825,7 @@ GameScreen.prototype._tabsNavigation = function(
 
   if (newIndex === currentIndex) return;
 
-  tabsNavigation.navigateTo(tabsNavigation.tabs[newIndex]);
+  tabsNavigation.navigateTo(newIndex);
   this.cursorPosX = buttonX;
   this.cursorPosY = buttonY;
   this._updateCursorPos();
