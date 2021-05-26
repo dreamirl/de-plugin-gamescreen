@@ -49,7 +49,6 @@ function GameScreen(name, params) {
   this.oldButton = null;
   this.currentButton = null;
   this.lastDownButton = null;
-  this.isGameWindowFocused = true;
 }
 
 GameScreen.prototype = Object.create(DE.Events.Emitter.prototype);
@@ -136,14 +135,6 @@ GameScreen.prototype.initializeMenuControls = function(params) {
     },
     { once: true },
   );
-
-  window.addEventListener('focus', () => {
-    this.isGameWindowFocused = true;
-  });
-
-  window.addEventListener('blur', () => {
-    this.isGameWindowFocused = false;
-  });
 
   // DE.Event.addEventComponents( this );
 };
@@ -265,12 +256,7 @@ GameScreen.prototype.enableMenuNavigation = function(
     'keyDown',
     gamepadOptions.confirmInput || 'confirm',
     () => {
-      if (
-        !this.currentButton ||
-        this.activeScreen[0] != this.screen ||
-        !this.isGameWindowFocused
-      )
-        return;
+      if (!this.currentButton || this.activeScreen[0] != this.screen) return;
       this.currentButton.onMouseDown();
       this.lastDownButton = this.currentButton;
     },
@@ -284,8 +270,7 @@ GameScreen.prototype.enableMenuNavigation = function(
       if (
         !this.currentButton ||
         this.activeScreen[0] != this.screen ||
-        this.lastDownButton !== this.currentButton ||
-        !this.isGameWindowFocused
+        this.lastDownButton !== this.currentButton
       )
         return;
       this.currentButton.onMouseUp();
@@ -408,7 +393,6 @@ GameScreen.prototype.addShortcut = function(shortcut) {
             if (
               !this.enable ||
               this.activeScreen[0] != this.screen ||
-              !this.isGameWindowFocused ||
               this.disableShortcuts
             )
               return;
@@ -425,7 +409,6 @@ GameScreen.prototype.addShortcut = function(shortcut) {
             if (
               !this.enable ||
               this.activeScreen[0] != this.screen ||
-              !this.isGameWindowFocused ||
               this.disableShortcuts
             )
               return;
@@ -443,7 +426,6 @@ GameScreen.prototype.addShortcut = function(shortcut) {
           if (
             !this.enable ||
             this.activeScreen[0] != this.screen ||
-            !this.isGameWindowFocused ||
             this.disableShortcuts
           )
             return;
@@ -458,7 +440,6 @@ GameScreen.prototype.addShortcut = function(shortcut) {
           if (
             !this.enable ||
             this.activeScreen[0] != this.screen ||
-            !this.isGameWindowFocused ||
             this.disableShortcuts
           )
             return;
@@ -811,12 +792,7 @@ GameScreen.prototype._tabsNavigation = function(
   buttonY,
 ) {
   if (tabsNavigation.ref) tabsNavigation = tabsNavigation.ref;
-  if (
-    this.activeScreen[0] != this.screen ||
-    !this.isGameWindowFocused ||
-    !tabsNavigation.tabs
-  )
-    return;
+  if (this.activeScreen[0] != this.screen || !tabsNavigation.tabs) return;
   const currentIndex = tabsNavigation.currentTabIndex;
   let newIndex = currentIndex + dir;
 
@@ -843,8 +819,7 @@ GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
   if (
     !this.enable ||
     this.currentKeyPressed !== key ||
-    this.activeScreen[0] != this.screen ||
-    !this.isGameWindowFocused
+    this.activeScreen[0] != this.screen
   )
     return;
 
@@ -887,7 +862,7 @@ GameScreen.prototype._onGamepadHAxe = function(val, axe) {
   )
     return;
 
-  if (this.activeScreen[0] != this.screen || !this.isGameWindowFocused) {
+  if (this.activeScreen[0] != this.screen) {
     return;
   }
 
@@ -923,7 +898,7 @@ GameScreen.prototype._onGamepadVAxe = function(val, axe) {
   )
     return;
 
-  if (this.activeScreen[0] != this.screen || !this.isGameWindowFocused) {
+  if (this.activeScreen[0] != this.screen) {
     return;
   }
 
