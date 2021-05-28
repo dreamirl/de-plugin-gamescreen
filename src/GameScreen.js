@@ -275,6 +275,7 @@ GameScreen.prototype.enableMenuNavigation = function(
         return;
       this.currentButton.onMouseUp();
       this.currentButton.onMouseClick();
+      this.lastDownButton = undefined;
     },
     this,
   );
