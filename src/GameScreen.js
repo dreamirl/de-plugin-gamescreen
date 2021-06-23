@@ -247,6 +247,7 @@ GameScreen.prototype.enableMenuNavigation = function(
       () => {
         this.currentKeyPressed = undefined;
         this.useNavShortDelay = false;
+        if (this.keyPressTimeout) clearTimeout(this.keyPressTimeout);
       },
       this,
     );
@@ -839,7 +840,7 @@ GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
     : this.menuSettings.navDelayLong;
 
   var self = this;
-  setTimeout(function() {
+  this.keyPressTimeout = setTimeout(function() {
     self._onKeyPress(changePosX, dir, key);
   }, delay);
 
