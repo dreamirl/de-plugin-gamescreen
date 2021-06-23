@@ -109,8 +109,8 @@ GameScreen.prototype.initializeMenuControls = function(params) {
     };
 
   this.menuSettings = {
-    navDelayLong: params.navDelayLong || params.gamepad.navDelayLong || 1000,
-    navDelayShort: params.navDelayShort || params.gamepad.navDelayShort || 700,
+    navDelayLong: params.navDelayLong || params.gamepad.navDelayLong || 300,
+    navDelayShort: params.navDelayShort || params.gamepad.navDelayShort || 150,
   };
 
   if (params.shortcuts)
@@ -859,7 +859,8 @@ GameScreen.prototype._onGamepadHAxe = function(val, axe) {
       val > -this.gamepadSettings.minForceX) ||
     val == undefined ||
     this.currentAxeMoved !== axe ||
-    (this.lastInputHaxe && Date.now() - this.lastInputHaxe < 500)
+    (this.lastInputHaxe &&
+      Date.now() - this.lastInputHaxe < this.menuSettings.navDelayShort)
   )
     return;
 
@@ -895,7 +896,8 @@ GameScreen.prototype._onGamepadVAxe = function(val, axe) {
       val > -this.gamepadSettings.minForceY) ||
     val == undefined ||
     this.currentAxeMoved !== axe ||
-    (this.lastInputVaxe && Date.now() - this.lastInputVaxe < 500)
+    (this.lastInputVaxe &&
+      Date.now() - this.lastInputVaxe < this.menuSettings.navDelayShort)
   )
     return;
 
