@@ -584,13 +584,15 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
     const cursor = cursors[cursorIndex];
 
     [cursor.x, cursor.y] = loopCursor(cursor.x, cursor.y, self.menuNavigation);
-    const cursorPos = self.menuNavigation[cursor.y][cursor.x];
+    let cursorPos = self.menuNavigation[cursor.y][cursor.x];
 
-    if (
-      cursorPos &&
-      (cursorPos.enable || (cursorPos.btn && cursorPos.btn.enable))
-    )
-      return cursorIndex;
+    if (cursorPos) {
+      const btn = cursorPos.btn || cursorPos;
+      if (typeof btn === 'object') {
+        if (btn.enable && !btn.locked) return cursorIndex;
+        else cursorPos = '+';
+      }
+    }
 
     switch (cursorPos) {
       case '#':
