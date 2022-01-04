@@ -167,6 +167,7 @@ GameScreen.prototype.enableMenuNavigation = function(
       (val) => {
         if (val > 0) this.currentAxeMoved = 'right';
         else if (val < 0) this.currentAxeMoved = 'left';
+        else this.currentAxeMoved = undefined;
         this._onGamepadHAxe(val, this.currentAxeMoved);
       },
       this,
@@ -177,6 +178,7 @@ GameScreen.prototype.enableMenuNavigation = function(
       (val) => {
         if (val > 0) this.currentAxeMoved = 'up';
         else if (val < 0) this.currentAxeMoved = 'down';
+        else this.currentAxeMoved = undefined;
         this._onGamepadVAxe(val, this.currentAxeMoved);
       },
       this,
@@ -187,7 +189,6 @@ GameScreen.prototype.enableMenuNavigation = function(
       () => {
         this.useNavShortDelay = false;
         this.lastInputHaxe = 0;
-        this.currentAxeMoved = undefined;
       },
       this,
     );
@@ -197,7 +198,6 @@ GameScreen.prototype.enableMenuNavigation = function(
       () => {
         this.useNavShortDelay = false;
         this.lastInputVaxe = 0;
-        this.currentAxeMoved = undefined;
       },
       this,
     );
