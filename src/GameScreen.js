@@ -394,7 +394,7 @@ GameScreen.prototype.addShortcut = function(shortcut) {
           (val) => {
             if (
               !this.enable ||
-              this.activeScreen[0] != this.screen ||
+              (!this.persistent && this.activeScreen[0] !== this.screen) ||
               this.disableShortcuts
             )
               return;
@@ -410,7 +410,7 @@ GameScreen.prototype.addShortcut = function(shortcut) {
           () => {
             if (
               !this.enable ||
-              this.activeScreen[0] != this.screen ||
+              (!this.persistent && this.activeScreen[0] !== this.screen) ||
               this.disableShortcuts
             )
               return;
@@ -427,7 +427,7 @@ GameScreen.prototype.addShortcut = function(shortcut) {
         () => {
           if (
             !this.enable ||
-            this.activeScreen[0] != this.screen ||
+            (!this.persistent && this.activeScreen[0] !== this.screen) ||
             this.disableShortcuts
           )
             return;
@@ -441,7 +441,7 @@ GameScreen.prototype.addShortcut = function(shortcut) {
         () => {
           if (
             !this.enable ||
-            this.activeScreen[0] != this.screen ||
+            (!this.persistent && this.activeScreen[0] !== this.screen) ||
             this.disableShortcuts
           )
             return;
