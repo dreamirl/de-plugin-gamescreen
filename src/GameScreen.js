@@ -109,8 +109,8 @@ GameScreen.prototype.initializeMenuControls = function(params) {
     };
 
   this.menuSettings = {
-    navDelayLong: params.navDelayLong || params.gamepad.navDelayLong || 300,
-    navDelayShort: params.navDelayShort || params.gamepad.navDelayShort || 150,
+    navDelayLong: params.navDelayLong || params.gamepad.navDelayLong || 400,
+    navDelayShort: params.navDelayShort || params.gamepad.navDelayShort || 300,
   };
 
   if (params.shortcuts)

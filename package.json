@@ -1,6 +1,6 @@
 {
   "name": "@dreamirl/de-plugin-gamescreen",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "",
   "main": "index.js",
   "devDependencies": {
