@@ -271,7 +271,7 @@ GameScreen.prototype.enableMenuNavigation = function(
       if (!this.currentButton || this.activeScreen[0] != this.screen) return;
 
       if (this.lastDownButton !== this.currentButton) {
-        this.lastDownButton.onMouseUpOutside();
+        if (this.lastDownButton) this.lastDownButton.onMouseUpOutside();
         return;
       }
 
