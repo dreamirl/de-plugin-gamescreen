@@ -268,12 +268,13 @@ GameScreen.prototype.enableMenuNavigation = function(
     'keyUp',
     gamepadOptions.confirmInput || 'confirm',
     () => {
-      if (
-        !this.currentButton ||
-        this.activeScreen[0] != this.screen ||
-        this.lastDownButton !== this.currentButton
-      )
+      if (!this.currentButton || this.activeScreen[0] != this.screen) return;
+
+      if (this.lastDownButton !== this.currentButton) {
+        this.lastDownButton.onMouseUpOutside();
         return;
+      }
+
       this.currentButton.onMouseUp();
       this.currentButton.onMouseClick();
       this.lastDownButton = undefined;
