@@ -587,6 +587,16 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
     [cursor.x, cursor.y] = loopCursor(cursor.x, cursor.y, self.menuNavigation);
     let cursorPos = self.menuNavigation[cursor.y][cursor.x];
 
+    if (
+      (initDir === 'up' && cursor.dir === 'down') ||
+      (initDir === 'right' && cursor.dir === 'left') ||
+      (initDir === 'down' && cursor.dir === 'up') ||
+      (initDir === 'left' && cursor.dir === 'right')
+    ) {
+      cursors[cursorIndex] = undefined;
+      return;
+    }
+
     if (cursorPos) {
       const btn = cursorPos.btn || cursorPos;
       if (typeof btn === 'object') {
