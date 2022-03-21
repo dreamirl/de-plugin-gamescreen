@@ -12,7 +12,7 @@ import DE from '@dreamirl/dreamengine/src';
  * @param {Array} screens - screens to push inside the manager, can be done later
  * @author Inateno
  */
-var GameScreensManager = function(render, screens) {
+var GameScreensManager = function (render, screens) {
   this.render = render;
 
   this.screens = {};
@@ -39,7 +39,7 @@ GameScreensManager.prototype = {};
  * move to previous screen in the history if possible (keep used transition)
  * @memberOf GameScreensManager
  */
-GameScreensManager.prototype.previous = function() {
+GameScreensManager.prototype.previous = function () {
   if (this.history.length == 0) return;
 
   this.historyId = (this.historyId || this.history.length) - 1;
@@ -51,7 +51,7 @@ GameScreensManager.prototype.previous = function() {
  * move to next screen in the history if possible (keep used transition)
  * @memberOf GameScreensManager
  */
-GameScreensManager.prototype.next = function() {
+GameScreensManager.prototype.next = function () {
   if (this.history.length == 0 || this.historyId >= this.history.length - 1)
     return;
 
@@ -66,7 +66,7 @@ GameScreensManager.prototype.next = function() {
  * @param {DE.GameScreen} screen
  * @example myGameScreen.add( titleScreen );
  */
-GameScreensManager.prototype.add = function(screen) {
+GameScreensManager.prototype.add = function (screen) {
   if (this.screens[screen.name] && DE.CONFIG.DEBUG_LEVEL > 0)
     console.warn(
       'You just overwrite an existing screen in your GameScreensManager',
@@ -92,7 +92,7 @@ GameScreensManager.prototype.add = function(screen) {
  * @param {Bool} keepScenesActive if you want to keep all other scene active (update won't be shot off)
  * @param {Object} transition describe the transition, check transitions list in DE.GameScreen
  */
-GameScreensManager.prototype.changeScreen = function(
+GameScreensManager.prototype.changeScreen = function (
   screenName,
   args,
   keepScenesActive,

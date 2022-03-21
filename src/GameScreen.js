@@ -57,9 +57,9 @@ GameScreen.prototype.constructor = GameScreen;
 GameScreen.prototype.trigger = GameScreen.prototype.emit;
 // DE.Event.addEventCapabilities( GameScreen );
 
-GameScreen.prototype.initialize = function() {};
+GameScreen.prototype.initialize = function () {};
 
-GameScreen.prototype.initializeMenuControls = function(params) {
+GameScreen.prototype.initializeMenuControls = function (params) {
   const useGamepad = params.gamepad !== undefined;
   const useKeyboard =
     params.useKeyboard === undefined ? true : params.useKeyboard;
@@ -146,7 +146,7 @@ GameScreen.prototype.initializeMenuControls = function(params) {
  * @param {Array} navigationArray a 2d array with objects name inside, these object should already exist in the screen
  * @param {Object} options configure inputs names, default is: "haxe", "vaxe", "confirm"
  */
-GameScreen.prototype.enableMenuNavigation = function(
+GameScreen.prototype.enableMenuNavigation = function (
   useGamepad,
   useKeyboard,
   menuNavigation,
@@ -352,7 +352,7 @@ GameScreen.prototype.enableMenuNavigation = function(
  * @param {GameObject} GameObject same as Scene.add, call with one or more GameObject or array, or both
  * @example myScreen.add( object1, button, [ tile1, tile2, tile3 ] );
  */
-GameScreen.prototype.add = function() {
+GameScreen.prototype.add = function () {
   this.scene.add.apply(this.scene, arguments);
 };
 
@@ -363,7 +363,7 @@ GameScreen.prototype.add = function() {
  * @memberOf GameScreen
  * @param {Object} buttons list of buttons, need as JS Object
  */
-GameScreen.prototype.addButtons = function(buttons) {
+GameScreen.prototype.addButtons = function (buttons) {
   for (var i in buttons) {
     if (this.buttons[i] && DE.CONFIG.DEBUG_LEVEL > 0)
       console.warn(
@@ -384,7 +384,7 @@ GameScreen.prototype.addButtons = function(buttons) {
  * {String} inputName input to listen
  * {GameObject} btn button to trigger when input occur
  */
-GameScreen.prototype.addShortcut = function(shortcut) {
+GameScreen.prototype.addShortcut = function (shortcut) {
   if (shortcut.isAxe) {
     this._shortcuts[shortcut.name] = {
       axeMoved:
@@ -464,7 +464,7 @@ GameScreen.prototype.addShortcut = function(shortcut) {
  * @memberOf GameScreen
  * @param {String} name shortcut to remove
  */
-GameScreen.prototype.removeShortcut = function(name) {
+GameScreen.prototype.removeShortcut = function (name) {
   delete this._shortcuts[name];
 };
 
@@ -474,7 +474,7 @@ GameScreen.prototype.removeShortcut = function(name) {
  * you can call it directly if you are doing stuff on GameObjects and/or changing your menuNavigation
  * @memberOf GameScreen
  */
-GameScreen.prototype._updateCursorPos = function() {
+GameScreen.prototype._updateCursorPos = function () {
   if (!this.menuNavigation[this.cursorPosY])
     return console.warn('cursorPosY is out of the navigation map bounds');
   const btn = this.menuNavigation[this.cursorPosY][this.cursorPosX];
@@ -516,7 +516,7 @@ GameScreen.prototype._updateCursorPos = function() {
  * related to menu navigation, fired when a mouse movement is detected
  * @memberOf GameScreen
  */
-GameScreen.prototype._onMouseMove = function() {
+GameScreen.prototype._onMouseMove = function () {
   if (this.currentButton && this.currentButton.onMouseLeave) {
     this.currentButton.onMouseLeave();
   }
@@ -537,7 +537,10 @@ GameScreen.prototype._onMouseMove = function() {
  * @param {Boolean} changePosX false if changing Y
  * @param {Number} cursorMovement -1 or 1, the cursor movement
  */
-GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
+GameScreen.prototype.calculateCursorPos = function (
+  changePosX,
+  cursorMovement,
+) {
   let tempCursorPosX = this.cursorPosX;
   let tempCursorPosY = this.cursorPosY;
   let oldCursorPosX = this.cursorPosX;
@@ -800,7 +803,7 @@ GameScreen.prototype.calculateCursorPos = function(changePosX, cursorMovement) {
  * @param {Number} buttonX new x position of the cursor after tab navigation
  * @param {Number} buttonY new y position of the cursor after tab navigation
  */
-GameScreen.prototype._tabsNavigation = function(
+GameScreen.prototype._tabsNavigation = function (
   tabsNavigation,
   dir,
   buttonX,
@@ -830,7 +833,7 @@ GameScreen.prototype._tabsNavigation = function(
  * @param {String} key key pressed, used for nav delay
  * @memberOf GameScreen
  */
-GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
+GameScreen.prototype._onKeyPress = function (changePosX, dir, key) {
   if (
     !this.enable ||
     this.currentKeyPressed !== key ||
@@ -853,7 +856,7 @@ GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
     : this.menuSettings.navDelayLong;
 
   var self = this;
-  this.keyPressTimeout = setTimeout(function() {
+  this.keyPressTimeout = setTimeout(function () {
     self._onKeyPress(changePosX, dir, key);
   }, delay);
 
@@ -866,7 +869,7 @@ GameScreen.prototype._onKeyPress = function(changePosX, dir, key) {
  * also onGamepadVAxe and cursorSelect exist too, and if you plan to overwrite one of these functions you should do it for all
  * @memberOf GameScreen
  */
-GameScreen.prototype._onGamepadHAxe = function(val, axe) {
+GameScreen.prototype._onGamepadHAxe = function (val, axe) {
   if (
     !this.enable ||
     (val < this.gamepadSettings.minForceX &&
@@ -897,13 +900,13 @@ GameScreen.prototype._onGamepadHAxe = function(val, axe) {
     : this.menuSettings.navDelayLong;
 
   var self = this;
-  setTimeout(function() {
+  setTimeout(function () {
     self._onGamepadHAxe(val, axe);
   }, delay);
 
   this.useNavShortDelay = true;
 };
-GameScreen.prototype._onGamepadVAxe = function(val, axe) {
+GameScreen.prototype._onGamepadVAxe = function (val, axe) {
   if (
     !this.enable ||
     (val < this.gamepadSettings.minForceY &&
@@ -934,7 +937,7 @@ GameScreen.prototype._onGamepadVAxe = function(val, axe) {
     : this.menuSettings.navDelayLong;
 
   var self = this;
-  setTimeout(function() {
+  setTimeout(function () {
     self._onGamepadVAxe(val, axe);
   }, delay);
 
@@ -948,7 +951,7 @@ GameScreen.prototype._onGamepadVAxe = function(val, axe) {
  * @param {*} args optional arguments bubbled trough events
  * @param {Object} transition used transition, check transition method
  */
-GameScreen.prototype.show = function(args, transition) {
+GameScreen.prototype.show = function (args, transition) {
   DE.emit('gamescreen-show', this.name, args);
   this.emit.apply(
     this,
@@ -974,7 +977,7 @@ GameScreen.prototype.show = function(args, transition) {
  * hide this screen (disable camera and scene)
  * @memberOf GameScreen
  */
-GameScreen.prototype.hide = function(keepSceneActive, transition, silent) {
+GameScreen.prototype.hide = function (keepSceneActive, transition, silent) {
   if (!silent) {
     DE.emit('gamescreen-hide', this.name);
     this.emit('hide', this);
@@ -1003,7 +1006,7 @@ GameScreen.prototype.hide = function(keepSceneActive, transition, silent) {
  * TODO
  * @memberOF GameScreen
  */
-GameScreen.prototype.transition = function(data) {
+GameScreen.prototype.transition = function (data) {
   // data.type
   // data.delay
 };
