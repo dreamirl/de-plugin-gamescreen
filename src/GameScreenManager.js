@@ -17,6 +17,7 @@ var GameScreensManager = function (render, screens) {
 
   this.screens = {};
   this.history = [];
+  this.currentScreenName = null;
 
   if (screens.length) {
     for (var i = 0; i < screens.length; ++i) {
@@ -104,6 +105,7 @@ GameScreensManager.prototype.changeScreen = function (
   }
 
   this.screens[screenName].show(args, transition);
+  this.currentScreenName = screenName;
   DE.emit('changeScreen', screenName);
 };
 
