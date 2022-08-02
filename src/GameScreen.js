@@ -14,7 +14,6 @@ import DE from '@dreamirl/dreamengine/src';
  * @param {Object} params - All parameters are optional
  * @author Inateno
  */
-console.log('DE EVent is', DE.Events);
 export default class GameScreen extends DE.Events.Emitter {
   constructor(name, params) {
     super();
