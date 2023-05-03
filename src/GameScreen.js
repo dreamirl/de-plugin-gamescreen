@@ -1,4 +1,4 @@
-import DE from '@dreamirl/dreamengine/src';
+import DE from '@dreamirl/dreamengine';
 
 // TODO idea Inputs.js
 // ajouter une fonction dans les callback, si on a le pointer d'un gameObject sur la callback;
