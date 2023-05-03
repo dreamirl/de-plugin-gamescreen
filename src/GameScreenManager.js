@@ -1,4 +1,4 @@
-import DE from '@dreamirl/dreamengine/src';
+import DE from '@dreamirl/dreamengine';
 
 /* TODO
  * fadeOut/In transition
