@@ -18,7 +18,7 @@ export default class GameScreen extends DE.Events.Emitter {
   constructor(name, params) {
     super();
 
-    if (!params) params = {};
+    if (!params) params = { camera: [] }; // needs empty array for camera at least
 
     if (params.initialize) this.initialize = params.initialize;
 
