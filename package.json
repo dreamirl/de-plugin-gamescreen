@@ -2,7 +2,7 @@
   "name": "@dreamirl/de-plugin-gamescreen",
   "version": "1.4.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "devDependencies": {
     "husky": "^7.0.0",
     "prettier": "^2.2.0",
