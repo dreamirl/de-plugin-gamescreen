@@ -20,7 +20,7 @@ class GameScreensManager {
 
   currentScreenName: string = '';
 
-  consturctor(render, screens) {
+  constructor(render, screens) {
     this.render = render;
 
     if (screens.length) {
