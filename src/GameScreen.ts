@@ -1,9 +1,44 @@
-import DE from '@dreamirl/dreamengine';
+import DE, { GameObject } from '@dreamirl/dreamengine';
 
 // TODO idea Inputs.js
 // ajouter une fonction dans les callback, si on a le pointer d'un gameObject sur la callback;
 // si le gameobject est !enable on empêche le trigger callback sauf si argument "force" est a
 // "true" lors de la déclaration (ddonc ajouter un paramètre dans la déclaration d'events)
+
+// TODO: update engine so it exports CameraParams
+type CameraParams = Record<string, any> & {
+  scene: DE.Scene;
+};
+
+export type GameScreenParams = {
+  initialize?: () => void;
+  /**
+   * @param {Camera} camera
+   * @param {number} camera.x
+   * @param {number} camera.y
+   * @param {number} camera.width
+   * @param {number} camera.height
+   * @param {CameraParams} camera.params
+   * Or deprecated:
+   * @param {[number, number, number, number, CameraParams]} camera.array
+   */
+  camera:
+    | {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        params: CameraParams;
+      }
+    | any[];
+  gui: Partial<GameObject> & {
+    automatisms?: Array<Array<any>>;
+    scaleX?: number;
+    scaleY?: number;
+  };
+  buttons?: Record<string, GameObject>;
+  persistent?: boolean;
+};
 
 /**
  * @constructor GameScreen
@@ -30,23 +65,39 @@ export default class GameScreen extends DE.Events.Emitter {
   currentButton = null;
   lastDownButton = null;
 
-  constructor(name, params) {
+  constructor(name: string, params: Partial<GameScreenParams> = {}) {
     super();
-
-    if (!params) params = { camera: [] }; // needs empty array for camera at least
 
     if (params.initialize) this.initialize = params.initialize;
 
     this.name = name || 'gamescreen' + ((Math.random() * 10) >> 0);
     this.scene = new DE.Scene(name);
 
-    this.camera = new DE.Camera(
-      params.camera.x,
-      params.camera.y,
-      params.camera.width,
-      params.camera.height,
-      params.camera,
-    );
+    if (!params.camera) {
+      params.camera = {
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        params: {
+          scene: this.scene,
+        },
+      };
+    }
+
+    if (Array.isArray(params.camera)) {
+      const [x, y, width, height, camParams] = params.camera;
+      this.camera = new DE.Camera(x, y, width, height, camParams);
+    } else {
+      this.camera = new DE.Camera(
+        params.camera.x,
+        params.camera.y,
+        params.camera.width,
+        params.camera.height,
+        params.camera.params,
+      );
+    }
+
     this.camera.scene = this.scene;
     this.persistent = params.persistent || false;
 
