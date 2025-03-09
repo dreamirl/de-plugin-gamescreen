@@ -134,8 +134,8 @@ export default class GameScreen extends DE.Events.Emitter {
    * @param {GameObject} GameObject same as Scene.add, call with one or more GameObject or array, or both
    * @example myScreen.add( object1, button, [ tile1, tile2, tile3 ] );
    */
-  add() {
-    this.scene.add.apply(this.scene, arguments);
+  add(...objects: GameObject[]) {
+    this.scene.add(...objects);
   }
 
   /**
@@ -162,9 +162,9 @@ export default class GameScreen extends DE.Events.Emitter {
    * show this screen (enable camera and scene)
    * @memberOf GameScreen
    * @param {*} args optional arguments bubbled trough events
-   * @param {Object} transition used transition, check transition method
+   * @param {Object} TODO: transition used transition, check transition method
    */
-  show(args, transition) {
+  show(args, transition?: any) {
     DE.emit('gamescreen-show', this.name, args);
     this.emit.apply(
       this,
@@ -190,7 +190,7 @@ export default class GameScreen extends DE.Events.Emitter {
    * hide this screen (disable camera and scene)
    * @memberOf GameScreen
    */
-  hide(keepSceneActive, transition, silent) {
+  hide(keepSceneActive = false, transition?: any, silent = false) {
     if (!silent) {
       DE.emit('gamescreen-hide', this.name);
       this.emit('hide', this);
@@ -216,10 +216,10 @@ export default class GameScreen extends DE.Events.Emitter {
 
   /**
    * @public
-   * TODO
+   * TODO: transition
    * @memberOF GameScreen
    */
-  transition(data) {
+  transition(data?: any) {
     // data.type
     // data.delay
   }
