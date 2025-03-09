@@ -164,10 +164,10 @@ export default class GameScreen extends DE.Events.Emitter {
    * @param {*} args optional arguments bubbled trough events
    * @param {Object} TODO: transition used transition, check transition method
    */
-  show(args: any[], transition?: any) {
+  show(args?: any[], transition?: any) {
     DE.emit('gamescreen-show', this.name, args);
 
-    if (Array.isArray(args) && args.length) {
+    if (args && Array.isArray(args) && args.length) {
       let argsArr: [string, ...any] = ['show', ...args];
       this.emit.apply(this, argsArr);
     } else {
