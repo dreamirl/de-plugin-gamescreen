@@ -164,12 +164,16 @@ export default class GameScreen extends DE.Events.Emitter {
    * @param {*} args optional arguments bubbled trough events
    * @param {Object} TODO: transition used transition, check transition method
    */
-  show(args, transition?: any) {
+  show(args: any[], transition?: any) {
     DE.emit('gamescreen-show', this.name, args);
-    this.emit.apply(
-      this,
-      args && args.push ? ['show'].concat(args) : ['show', args],
-    );
+
+    if (Array.isArray(args) && args.length) {
+      let argsArr: [string, ...any] = ['show', ...args];
+      this.emit.apply(this, argsArr);
+    } else {
+      let argsArr: [string, ...any[]] = ['show', args];
+      this.emit.apply(this, argsArr);
+    }
 
     this.scene.enable = true;
     this.camera.enable = true;
@@ -178,10 +182,13 @@ export default class GameScreen extends DE.Events.Emitter {
     }
     this.enable = true;
 
-    this.emit.apply(
-      this,
-      args && args.push ? ['shown'].concat(args) : ['shown', args],
-    );
+    if (Array.isArray(args) && args.length) {
+      let argsArr: [string, ...any] = ['shown', ...args];
+      this.emit.apply(this, argsArr);
+    } else {
+      let argsArr: [string, ...any[]] = ['shown', args];
+      this.emit.apply(this, argsArr);
+    }
     DE.emit('gamescreen-shown', this.name, args);
   }
 
