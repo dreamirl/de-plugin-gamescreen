@@ -165,4 +165,4 @@ export default class GameScreen extends DE.Events.Emitter {
   }
 }
 
-DE.GameScreen = GameScreen;
+// DE.GameScreen = GameScreen;

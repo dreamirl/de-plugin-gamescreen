@@ -6,7 +6,8 @@
   "devDependencies": {
     "husky": "^7.0.0",
     "prettier": "^2.2.0",
-    "pretty-quick": "^3.1.1"
+    "pretty-quick": "^3.1.1",
+    "@dreamirl/dreamengine": "github:dreamirl/dreamengine"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

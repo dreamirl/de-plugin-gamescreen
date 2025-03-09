@@ -112,6 +112,6 @@ class GameScreensManager {
   }
 }
 
-DE.GameScreensManager = GameScreensManager;
+// DE.GameScreensManager = GameScreensManager;
 
 export default GameScreensManager;
