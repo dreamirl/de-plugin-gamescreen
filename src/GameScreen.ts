@@ -38,14 +38,23 @@ export default class GameScreen extends DE.Events.Emitter {
     if (params.initialize) this.initialize = params.initialize;
 
     this.name = name || 'gamescreen' + ((Math.random() * 10) >> 0);
-    this.scene = new DE.Scene();
+    this.scene = new DE.Scene(name);
 
-    this.camera = new DE.Camera(...params.camera);
+    this.camera = new DE.Camera(
+      params.camera.x,
+      params.camera.y,
+      params.camera.width,
+      params.camera.height,
+      params.camera,
+    );
     this.camera.scene = this.scene;
     this.persistent = params.persistent || false;
 
     if (params.gui) {
-      this.gui = new DE.Gui(name + '-gui');
+      this.gui = new DE.Gui({
+        ...params.gui,
+        name: name + '-gui',
+      });
     }
 
     this.enable = true;
